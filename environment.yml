@@ -5,5 +5,4 @@ dependencies:
   - click
   - pandas
   - biopython
-  - blast
 prefix: /home/powellor/anaconda3/envs/sabat
