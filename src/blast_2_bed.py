@@ -1,12 +1,5 @@
 import pandas as pd
 
-
-def swap_sstart_send(df):
-    cond = df.sstart > df.send
-    df.loc[cond, ["sstart", "send"]] = df.loc[cond, ["send", "sstart"]].values
-    return df
-
-
 def BLAST2BED9(input, output):
     cds_blast_data = pd.read_csv(
         input,
