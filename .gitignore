@@ -1,0 +1,5 @@
+*.bed
+*.fasta
+*.fa
+.ruff_cache
+*.txt
