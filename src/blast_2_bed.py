@@ -53,15 +53,15 @@ def BLAST2BED9(input, output):
         bed9["chrom"]: str = cds_blast_data.sseqid
 
     # Fill columns 2-9
-    bed9["chromStart"]: int = cds_blast_data.sstart
-    bed9["chromEnd"]: int = cds_blast_data.send 
+    bed9["chromStart"]: int = cds_blast_data.sstart  # type: ignore
+    bed9["chromEnd"]: int = cds_blast_data.send  # type: ignore
     bed9["name"]: int = cds_blast_data.index
     bed9["score"]: float = round(cds_blast_data.length / cds_blast_data.qlen, 2)
     bed9["strand"]: str = cds_blast_data.orientation.map(
         lambda x: "+" if x is True else "-"
     )
-    bed9["thickStart"]: int = cds_blast_data.sstart 
-    bed9["thickEnd"]: int = cds_blast_data.send
+    bed9["thickStart"]: int = cds_blast_data.sstart  # type: ignore
+    bed9["thickEnd"]: int = cds_blast_data.send  # type: ignore
     bed9["itemRgb"]: str = "145,30,180"
 
     # Save output to bed file (formatted as tsv)
