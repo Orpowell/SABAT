@@ -67,6 +67,36 @@ class GeneAssembler:
             print(error)
             sys.exit(1)
 
+    def predict_gene(self) -> None:
+        if self.sequences_extracted is False:
+            print("Error: Sequences not extracted")
+            sys.exit(1)
+
+        with open(self.exon_sequence_file.name) as handle:
+            seqs = [record.seq for record in SeqIO.parse(handle, "fasta")]
+
+        predicted_exons = []
+
+        for n, seq in enumerate(seqs):
+            sequence = ""
+            exon_length = 0
+
+            for i in range(0, 3):
+                exon = seq[i:].translate(to_stop=True)
+
+                if len(exon) > exon_length:
+                    sequence = exon
+                    exon_length = len(exon)
+
+            predicted_exons.append(sequence)
+
+        print("".join([str(seq) for seq in predicted_exons]))
+
+    def generate_statistics(self) -> None:
+        print(f"Predicted coverage: {self.exon_data.score.sum()}")
+        print(f"CDS gene length: TBA")
+        print(f"Protein length: TBA")
+
 
 def fetch_exons(BED_FILE, EXON_LIST, BLASTDB_PATH) -> None:
     bed = pd.read_csv(
@@ -127,8 +157,10 @@ if __name__ == "__main__":
     fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=LONG_BLASTDB_PATH)
     predict_gene()
     """
-    
+
     gene = GeneAssembler(
         BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST
     )
     gene.extract_exon_sequences()
+    gene.predict_gene()
+    gene.generate_statistics()
