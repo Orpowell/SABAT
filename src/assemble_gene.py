@@ -3,8 +3,10 @@ import pandas as pd
 import subprocess
 import sys
 import os
+import warnings
 from Bio import SeqIO
 
+warnings.filterwarnings("ignore")
 
 class GeneAssembler:
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST) -> None:
@@ -37,11 +39,7 @@ class GeneAssembler:
 
         self.exon_sequence_file = tempfile.NamedTemporaryFile(delete=False)
 
-        print(self.exon_sequence_file.name)
-
     def extract_exon_sequences(self) -> None:
-        print(self.bed)
-        print(self.exon_data)
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
@@ -72,6 +70,8 @@ class GeneAssembler:
             print("Error: Sequences not extracted")
             sys.exit(1)
 
+        print(f"Analysing gene containing {len(self.exon_data)} exon(s)\n")
+
         with open(self.exon_sequence_file.name) as handle:
             seqs = [record.seq for record in SeqIO.parse(handle, "fasta")]
 
@@ -93,7 +93,7 @@ class GeneAssembler:
         print("".join([str(seq) for seq in predicted_exons]))
 
     def generate_statistics(self) -> None:
-        print(f"Predicted coverage: {self.exon_data.score.sum()}")
+        print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
         print(f"CDS gene length: TBA")
         print(f"Protein length: TBA")
 
