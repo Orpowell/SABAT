@@ -20,14 +20,14 @@ def fetch_exons(BED_FILE, EXON_LIST, BLASTDB_PATH) -> None:
             "itemRgb",
         ],
     )
-
+    print(bed)
     bed = bed[bed.name.isin(EXON_LIST)]
-
+    print(bed)
     with open("tmp_entry_batch.txt", "w+") as file:
         for index, row in bed.iterrows():
             file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
 
-    blastcmd = f" blastdbcmd -db {BLASTDB_PATH} -entry_batch tmp_entry_batch.txt -out exon_sequences.fa -outfmt %f"
+    blastcmd = f"blastdbcmd -db {BLASTDB_PATH} -entry_batch tmp_entry_batch.txt -out exon_sequences.fa -outfmt %f"
 
     os.system(blastcmd)
 
@@ -55,16 +55,10 @@ def predict_gene() -> None:
 
 
 if __name__ == "__main__":
-    BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/wheat_genomes/chinese_spring/cs_blastdb/cs_blastdb"
+    CS_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/wheat_genomes/chinese_spring/cs_blastdb/cs_blastdb"
+    LONG_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/sitopsis_genomes/longissima_blastdb/longissima_blastdb"
 
-    # simple nlr BLAST
-    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/SrNLR_cds.bed"
-    EXON_LIST = [6, 7, 8]
-    fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=BLASTDB_PATH)
-    predict_gene()
-
-    # refined NLR
-    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/SrNLR_cds_refined.bed"
-    EXON_LIST = [118, 119, 120]
-    fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=BLASTDB_PATH)
+    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_nlr_cds_refined.mega.bed"
+    EXON_LIST = ["exon_42", "exon_43", "exon_44"]
+    fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=LONG_BLASTDB_PATH)
     predict_gene()
