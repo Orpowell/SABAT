@@ -1,6 +1,48 @@
 import os
+import tempfile
 import pandas as pd
 from Bio import SeqIO
+
+
+class GeneAssembler:
+    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST) -> None:
+        self.bed = pd.read_csv(
+            BED_FILE,
+            sep="\t",
+            header=None,
+            names=[
+                "chrom",
+                "chromStart",
+                "chromEnd",
+                "name",
+                "score",
+                "strand",
+                "thickStart",
+                "thickEnd",
+                "itemRgb",
+            ],
+        )
+
+        self.exon_list: list[str] = EXON_LIST
+
+        self.exon_data = self.bed[self.bed.isin(self.exon_list)]
+
+        self.sequences_extracted = False
+
+        self.blastdb: str = BLASTDB_PATH
+
+        self.batch_entry_file = tempfile.NamedTemporaryFile(delete=False)
+
+        self.exon_sequence_file = tempfile.NamedTemporaryFile(delete=False)
+
+    def extract_exon_sequences(self) -> None:
+        with open(self.batch_entry_file.name, "w+") as file:
+            for index, row in self.exon_data.iterrows():
+                file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
+
+        blastcmd = f"blastdbcmd -db {self.blastdb} -entry_batch tmp_entry_batch.txt -out {self.exon_sequence_file.name} -outfmt %f"
+
+        os.system(blastcmd)
 
 
 def fetch_exons(BED_FILE, EXON_LIST, BLASTDB_PATH) -> None:

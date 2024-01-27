@@ -2,7 +2,12 @@ import pandas as pd
 
 
 def BLAST2BED9(
-    input: str, output: str, locus_size: int, exon_count: int, q_cov_threshold: float, refseq=False
+    input: str,
+    output: str,
+    locus_size: int,
+    exon_count: int,
+    q_cov_threshold: float,
+    refseq=False,
 ) -> None:
     cds_blast_data = pd.read_csv(
         input,
@@ -47,7 +52,7 @@ def BLAST2BED9(
 
     # Remove any formatting from BLASTDB from sequence IDs
     if refseq:
-        cds_blast_data["chromosome"]: str = cds_blast_data.sseqid.map(   # type: ignore
+        cds_blast_data["chromosome"]: str = cds_blast_data.sseqid.map(  # type: ignore
             lambda x: x.split("|")[1]
         )
 
@@ -113,6 +118,7 @@ def BLAST2BED9(
         ],
     )
 
+
 if __name__ == "__main__":
     NLR_EXONS = 3
     NLR_LOCUS = 6000
@@ -128,7 +134,7 @@ if __name__ == "__main__":
         exon_count=KINASE_EXONS,
         q_cov_threshold=KINASE_QCOV,
         locus_size=KINASE_LOCUS,
-        refseq=True
+        refseq=True,
     )
     BLAST2BED9(
         "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/Sr62_cds_e0001.blastn",
@@ -136,7 +142,7 @@ if __name__ == "__main__":
         exon_count=KINASE_EXONS,
         q_cov_threshold=KINASE_QCOV,
         locus_size=KINASE_LOCUS,
-        refseq=True
+        refseq=True,
     )
 
     BLAST2BED9(
@@ -145,7 +151,7 @@ if __name__ == "__main__":
         exon_count=NLR_EXONS,
         locus_size=NLR_LOCUS,
         q_cov_threshold=NLR_QCOV,
-        refseq=True
+        refseq=True,
     )
 
     BLAST2BED9(
@@ -154,7 +160,7 @@ if __name__ == "__main__":
         exon_count=NLR_EXONS,
         locus_size=NLR_LOCUS,
         q_cov_threshold=NLR_QCOV,
-        refseq=True
+        refseq=True,
     )
 
     BLAST2BED9(
@@ -163,7 +169,7 @@ if __name__ == "__main__":
         exon_count=NLR_EXONS,
         locus_size=NLR_LOCUS,
         q_cov_threshold=NLR_QCOV,
-        refseq=True
+        refseq=True,
     )
 
     BLAST2BED9(
@@ -172,7 +178,7 @@ if __name__ == "__main__":
         exon_count=KINASE_EXONS,
         q_cov_threshold=KINASE_QCOV,
         locus_size=KINASE_LOCUS,
-        refseq=True
+        refseq=True,
     )
 
     BLAST2BED9(
@@ -180,7 +186,7 @@ if __name__ == "__main__":
         "longissima_nlr_cds_refined.mega.bed",
         exon_count=NLR_EXONS,
         q_cov_threshold=NLR_QCOV,
-        locus_size=NLR_LOCUS
+        locus_size=NLR_LOCUS,
     )
 
     BLAST2BED9(
@@ -188,5 +194,5 @@ if __name__ == "__main__":
         "longissima_sr62_cds_refined.mega.bed",
         exon_count=KINASE_EXONS,
         q_cov_threshold=KINASE_QCOV,
-        locus_size=KINASE_LOCUS
+        locus_size=KINASE_LOCUS,
     )
