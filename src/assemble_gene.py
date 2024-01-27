@@ -97,6 +97,12 @@ class GeneAssembler:
         print(f"CDS gene length: TBA")
         print(f"Protein length: TBA")
 
+    def run(self) -> None:
+
+        self.extract_exon_sequences()
+        self.predict_gene()
+        self.generate_statistics()
+
 
 def fetch_exons(BED_FILE, EXON_LIST, BLASTDB_PATH) -> None:
     bed = pd.read_csv(
@@ -161,6 +167,4 @@ if __name__ == "__main__":
     gene = GeneAssembler(
         BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST
     )
-    gene.extract_exon_sequences()
-    gene.predict_gene()
-    gene.generate_statistics()
+    gene.run()
