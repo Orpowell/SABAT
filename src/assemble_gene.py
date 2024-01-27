@@ -47,15 +47,25 @@ class GeneAssembler:
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
 
         try:
-            
-            subprocess.run(["blastdbcmd", "-db", f"{self.blastdb}", "-entry_batch", f"{self.batch_entry_file.name}", "-out", f"{self.exon_sequence_file.name}", "-outfmt", "%f"], check=True)
+            subprocess.run(
+                [
+                    "blastdbcmd",
+                    "-db",
+                    f"{self.blastdb}",
+                    "-entry_batch",
+                    f"{self.batch_entry_file.name}",
+                    "-out",
+                    f"{self.exon_sequence_file.name}",
+                    "-outfmt",
+                    "%f",
+                ],
+                check=True,
+            )
             self.sequences_extracted = True
 
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
             print(error)
             sys.exit(1)
-
-    
 
 
 def fetch_exons(BED_FILE, EXON_LIST, BLASTDB_PATH) -> None:
@@ -116,5 +126,7 @@ if __name__ == "__main__":
     fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=LONG_BLASTDB_PATH)
     predict_gene()
 
-    gene = GeneAssembler(BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST)
+    gene = GeneAssembler(
+        BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST
+    )
     gene.extract_exon_sequences()
