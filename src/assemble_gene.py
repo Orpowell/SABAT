@@ -97,8 +97,8 @@ class GeneAssembler:
 
     def generate_statistics(self) -> None:
         print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
-        print("CDS gene length: TBA")
         print(f"Protein length: {len(self.protein)}")
+        print("CDS gene length: TBA")
 
     def run(self) -> None:
 
