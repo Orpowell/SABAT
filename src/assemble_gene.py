@@ -66,7 +66,7 @@ class GeneAssembler:
             print(error)
             sys.exit(1)
 
-    def predict_gene(self) -> None:
+    def predict_protein(self) -> None:
         if self.sequences_extracted is False:
             print("Error: Sequences not extracted")
             sys.exit(1)
@@ -101,8 +101,7 @@ class GeneAssembler:
     def run(self) -> None:
 
         self.extract_exon_sequences()
-        #self.predict_gene()
-        self.better_predict_gene()
+        self.predict_protein()
         self.generate_statistics()
 
 
