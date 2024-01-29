@@ -74,7 +74,7 @@ class GeneAssembler:
         self.exon_data["ORF2"] = self.exon_data.sequence.map(lambda x: x[1:] if len(x[1:]) % 3 == 0 else x[1:-(len(x[1:]) % 3)])
         self.exon_data["ORF3"] = self.exon_data.sequence.map(lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2:-(len(x[2:]) % 3)])
 
-
+        print(self.exon_data)
 
 
     def predict_protein(self) -> None:
@@ -119,7 +119,7 @@ class GeneAssembler:
 
         self.extract_exon_sequences()
         #self.predict_protein()
-        self.load_exons_into_dataframe()
+        self.load_ORFS_into_dataframe()
         self.generate_statistics()
         self.nuke()
 
