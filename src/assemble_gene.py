@@ -2,10 +2,8 @@ import tempfile
 import pandas as pd
 import subprocess
 import sys
-import os
 import warnings
 from Bio import SeqIO
-from Bio.Seq import Seq
 
 warnings.filterwarnings("ignore")
 
@@ -39,6 +37,8 @@ class GeneAssembler:
         self.batch_entry_file = tempfile.NamedTemporaryFile(delete=False)
 
         self.exon_sequence_file = tempfile.NamedTemporaryFile(delete=False)
+
+        self.protein = ""
 
     def extract_exon_sequences(self) -> None:
         with open(self.batch_entry_file.name, "w+") as file:
@@ -91,12 +91,14 @@ class GeneAssembler:
 
             predicted_exons.append(sequence)
 
-        print("".join([str(seq) for seq in predicted_exons]))
+        self.protein = "".join([str(seq) for seq in predicted_exons])
+
+        print(self.protein)
 
     def generate_statistics(self) -> None:
         print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
-        print(f"CDS gene length: TBA")
-        print(f"Protein length: TBA")
+        print("CDS gene length: TBA")
+        print(f"Protein length: {len(self.protein)}")
 
     def run(self) -> None:
 
