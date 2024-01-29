@@ -2,6 +2,7 @@ import tempfile
 import pandas as pd
 import subprocess
 import sys
+import os
 import warnings
 from Bio import SeqIO
 
@@ -31,8 +32,6 @@ class GeneAssembler:
         self.exon_data = self.bed[self.bed.name.isin(self.exon_list)]
 
         self.blastdb: str = BLASTDB_PATH
-
-        self.sequences_extracted = False
 
         self.batch_entry_file = tempfile.NamedTemporaryFile(delete=False)
 
@@ -66,10 +65,19 @@ class GeneAssembler:
             print(error)
             sys.exit(1)
 
+    def load_ORFS_into_dataframe(self) -> None:
+
+        with open(self.exon_sequence_file.name) as handle:
+            self.exon_data["sequence"] = [str(record.seq) for record in SeqIO.parse(handle, "fasta")]
+
+        self.exon_data["ORF1"] = self.exon_data.sequence.map(lambda x: x if len(x) % 3 == 0 else x[:-(len(x) % 3)])
+        self.exon_data["ORF2"] = self.exon_data.sequence.map(lambda x: x[1:] if len(x[1:]) % 3 == 0 else x[1:-(len(x[1:]) % 3)])
+        self.exon_data["ORF3"] = self.exon_data.sequence.map(lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2:-(len(x[2:]) % 3)])
+
+
+
+
     def predict_protein(self) -> None:
-        if self.sequences_extracted is False:
-            print("Error: Sequences not extracted")
-            sys.exit(1)
 
         print(f"Analysing gene containing {len(self.exon_data)} exon(s)\n")
 
@@ -95,25 +103,45 @@ class GeneAssembler:
 
         print(self.protein)
 
+
+
     def generate_statistics(self) -> None:
         print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
         print(f"Protein length: {len(self.protein)}")
         print("CDS gene length: TBA")
 
+    def nuke(self) -> None:
+        os.remove(self.batch_entry_file.name)
+        os.remove(self.exon_sequence_file.name)
+        print("Temporary files deleted...")
+
     def run(self) -> None:
 
         self.extract_exon_sequences()
-        self.predict_protein()
+        #self.predict_protein()
+        self.load_exons_into_dataframe()
         self.generate_statistics()
+        self.nuke()
 
 
 if __name__ == "__main__":
     CS_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/wheat_genomes/chinese_spring/cs_blastdb/cs_blastdb"
     LONG_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/sitopsis_genomes/longissima_blastdb/longissima_blastdb"
-    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_nlr_cds_refined.mega.bed"
-    EXON_LIST = ["exon_42", "exon_43", "exon_44"]
+    NLR_BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_nlr_cds_refined.mega.bed"
+    KINASE_BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_sr62_cds_refined.mega.bed"
+    NLR_EXON_LIST = ["exon_42", "exon_43", "exon_44"]
+    KINASE_EXON_LIST = ["exon_11", "exon_12", "exon_13", "exon_14", "exon_15", "exon_16", "exon_17", "exon_18", "exon_19", "exon_20", "exon_21"]
 
-    gene = GeneAssembler(
-        BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST
+    print("\nAnalysing NLR\n")
+    NLR_gene = GeneAssembler(
+        BED_FILE=NLR_BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=NLR_EXON_LIST
     )
-    gene.run()
+    NLR_gene.run()
+
+    """
+    print("\nAnalysing Kinase\n")
+    KINASE_gene = GeneAssembler(
+        BED_FILE=KINASE_BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=KINASE_EXON_LIST
+    )
+    KINASE_gene.run()
+    """
