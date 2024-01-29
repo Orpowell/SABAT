@@ -113,11 +113,6 @@ if __name__ == "__main__":
     BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_nlr_cds_refined.mega.bed"
     EXON_LIST = ["exon_42", "exon_43", "exon_44"]
 
-    """
-    fetch_exons(BED_FILE=BED_FILE, EXON_LIST=EXON_LIST, BLASTDB_PATH=LONG_BLASTDB_PATH)
-    predict_gene()
-    """
-
     gene = GeneAssembler(
         BED_FILE=BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=EXON_LIST
     )
