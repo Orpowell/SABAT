@@ -135,10 +135,9 @@ class GeneAssembler:
     def run(self) -> None:
 
         self.extract_exon_sequences()
-        #self.predict_protein()
         self.load_ORFS_into_dataframe()
         self.translate_ORFS()
-        self.better_predict_protein()
+        self.predict_protein()
         self.generate_statistics()
         self.nuke()
 
