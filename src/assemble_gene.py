@@ -124,6 +124,12 @@ class GeneAssembler:
                 print("first codon!")
                 exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
                 valid_starts = [exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")]
+
+                if len(valid_starts) == 0:
+                    self.nuke()
+                    print("No valid start codon in first exon")
+                    sys.exit(1)
+
                 exon_prots = [exon.prot1, exon.prot2, exon.prot3]
 
                 biggest_exon = valid_starts[0]
