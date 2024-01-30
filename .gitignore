@@ -3,3 +3,4 @@
 *.fa
 .ruff_cache
 *.txt
+*.profile
