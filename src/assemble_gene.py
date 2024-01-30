@@ -43,6 +43,8 @@ class GeneAssembler:
 
         self.protein = ""
 
+        self.cds = ""
+
     def extract_exon_sequences(self) -> None:
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
@@ -101,20 +103,21 @@ class GeneAssembler:
             exon_prots = [exon.prot1, exon.prot2, exon.prot3]
             prot_len = list(map(len, exon_prots))
 
-            print(prot_len)
-
             biggest_exon = prot_len.index(max(prot_len))
             
             protein.append(exon_prots[biggest_exon])
             cds.append(exon_cds[biggest_exon])
         
-        print("".join([str(seq) for seq in protein]), "\n")
-        print("".join([str(seq) for seq in cds]))
+        self.protein = "".join([str(seq) for seq in protein])
+        self.cds = "".join([str(seq) for seq in cds])
+
+        print(self.protein, "\n")
+        print(self.cds)
 
     def generate_statistics(self) -> None:
         print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
         print(f"Protein length: {len(self.protein)}")
-        print("CDS gene length: TBA")
+        print(f"CDS gene length: {len(self.cds)}")
 
     def nuke(self) -> None:
         try:
