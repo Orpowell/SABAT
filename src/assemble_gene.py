@@ -118,37 +118,49 @@ class GeneAssembler:
         print(self.exon_data)
 
         for index, exon in self.exon_data.iterrows():
-            print(exon.Name, first_exon, last_exon)
+
+            exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
+            exon_prots = [exon.prot1, exon.prot2, exon.prot3]
+            prot_len = list(map(len, exon_prots))
 
             if exon.Name == first_exon:
                 print("first codon!")
-                exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
+                
                 valid_starts = [exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")]
-
+                
                 if len(valid_starts) == 0:
                     self.nuke()
                     print("No valid start codon in first exon")
                     sys.exit(1)
 
-                exon_prots = [exon.prot1, exon.prot2, exon.prot3]
-
-                biggest_exon = valid_starts[0]
+                elif len(valid_starts) == 1:
+                    biggest_exon = valid_starts[0]
                 
-                protein.append(exon_prots[biggest_exon])
-                cds.append(exon_cds[biggest_exon])
+            elif exon.Name == last_exon:
             
-           
-            #elif exon.Name == last_exon:
-                #print("last codon!")
+                print("last codon!")
+                valid_stops = [exon_cds.index(e) for e in exon_cds if str(e).endswith(("TGA","TAA","TAG"))]
+
+                if len(valid_stops) == 0:
+                    self.nuke()
+                    print("No valid stop codon in first exon")
+                    sys.exit(1)
+                
+                elif len(valid_stops) == 0:
+                    biggest_exon = valid_stops[0]
+                
+                else:
+                    valid_prot_len = [length if n in valid_stops else 0 for n, length in enumerate(prot_len)]
+                    biggest_exon = valid_prot_len.index(max(valid_prot_len))
+                    print(valid_prot_len)
+                    print("rage")
 
             else:
-                exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
-                exon_prots = [exon.prot1, exon.prot2, exon.prot3]
-                prot_len = list(map(len, exon_prots))
+
                 biggest_exon = prot_len.index(max(prot_len))
 
-                protein.append(exon_prots[biggest_exon])
-                cds.append(exon_cds[biggest_exon])
+            protein.append(exon_prots[biggest_exon])
+            cds.append(exon_cds[biggest_exon])
 
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
