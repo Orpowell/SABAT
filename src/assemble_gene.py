@@ -19,7 +19,7 @@ class GeneAssembler:
                 "chrom",
                 "chromStart",
                 "chromEnd",
-                "name",
+                "Name",
                 "score",
                 "strand",
                 "thickStart",
@@ -30,12 +30,12 @@ class GeneAssembler:
 
         self.exon_list: list[str] = EXON_LIST
 
-        self.exon_data = self.bed[self.bed.name.isin(self.exon_list)]
+        self.exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
 
-        self.exon_data["name"] = pd.Categorical(
-            self.exon_data["name"], categories=self.exon_list, ordered=True
+        self.exon_data["Name"] = pd.Categorical(
+            self.exon_data["Name"], categories=self.exon_list, ordered=True
         )
-        self.exon_data.sort_values("name", inplace=True)
+        self.exon_data.sort_values("Name", inplace=True)
 
         self.blastdb: str = BLASTDB_PATH
 
@@ -113,16 +113,36 @@ class GeneAssembler:
     def predict_protein(self):
         protein = []
         cds = []
+        first_exon = self.exon_list[0]
+        last_exon = self.exon_list[-1]
+        print(self.exon_data)
 
         for index, exon in self.exon_data.iterrows():
-            exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
-            exon_prots = [exon.prot1, exon.prot2, exon.prot3]
-            prot_len = list(map(len, exon_prots))
+            print(exon.Name, first_exon, last_exon)
 
-            biggest_exon = prot_len.index(max(prot_len))
+            if exon.Name == first_exon:
+                print("first codon!")
+                exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
+                valid_starts = [exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")]
+                exon_prots = [exon.prot1, exon.prot2, exon.prot3]
 
-            protein.append(exon_prots[biggest_exon])
-            cds.append(exon_cds[biggest_exon])
+                biggest_exon = valid_starts[0]
+                
+                protein.append(exon_prots[biggest_exon])
+                cds.append(exon_cds[biggest_exon])
+            
+           
+            #elif exon.Name == last_exon:
+                #print("last codon!")
+
+            else:
+                exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
+                exon_prots = [exon.prot1, exon.prot2, exon.prot3]
+                prot_len = list(map(len, exon_prots))
+                biggest_exon = prot_len.index(max(prot_len))
+
+                protein.append(exon_prots[biggest_exon])
+                cds.append(exon_cds[biggest_exon])
 
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
@@ -177,8 +197,7 @@ if __name__ == "__main__":
         "exon_21",
     ]
     KINASE_EXON_LIST = KINASE_EXON_LIST[::-1]
-    print(KINASE_EXON_LIST)
-
+    
     print("\nAnalysing NLR\n")
     NLR_gene = GeneAssembler(
         BED_FILE=NLR_BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=NLR_EXON_LIST
