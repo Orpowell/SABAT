@@ -1,6 +1,7 @@
 import pandas as pd
+import click
 
-class BLAST2BED:
+class BlastConverter:
     def __init__(self,
                  input: str,
                  output: str,
@@ -131,12 +132,24 @@ class BLAST2BED:
         self.predict_gene_loci()
         self.write_bed_file()
 
+
+
+@click.command()
+@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="BLAST file in tabular format")
+@click.option("-e", "--exons", type=int, default=0, help="Expected number of exons in the gene")
+@click.option("-c", "--coverage", type=float, default = 1.1, help="Proportion of gene that must be covered  by a predicted locus")
+@click.option("-l", "--locus_size", type=int, default=1000, help="Expected size of the locus")
+@click.option("-o", "--output", type=click.Path(exists=False), default="coverted_blast", help="Path to output file (recommended extension is .bed or .bed9)")
+def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
+    converter = BlastConverter(input=input, exon_count=exons, q_cov_threshold=coverage, locus_size=size, output=output)
+    converter.run()
+
 if __name__ == "__main__":
 
-    vis = BLAST2BED(input= "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/sh_Sr62_cds.blastn.mega",
+    vis = BlastConverter(input= "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/sh_Sr62_cds.blastn.mega",
               exon_count= 9,
               q_cov_threshold= 0.8,
               locus_size = 10000,
-              output= "c2b_test_sh_sr62.mega.bed"
+              output= "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/c2b_test_sh_sr62.mega.bed"
             )
     vis.run()

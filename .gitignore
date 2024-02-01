@@ -4,3 +4,4 @@
 .ruff_cache
 *.txt
 *.profile
+src/__pycache__/
