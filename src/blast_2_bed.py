@@ -134,7 +134,6 @@ class BlastConverter:
         self.write_bed_file()
 
 
-
 @click.command()
 @click.option("-i", "--input", type=click.Path(exists=True), required=True, help="BLAST file in tabular format")
 @click.option("-e", "--exons", type=int, default=0, help="Expected number of exons in the gene")
