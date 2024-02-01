@@ -5,6 +5,7 @@ import sys
 import os
 import warnings
 from Bio import SeqIO
+import click
 
 warnings.filterwarnings("ignore")
 
@@ -158,7 +159,6 @@ class GeneAssembler:
 
                 biggest_exon = prot_len.index(max(prot_len))
 
-            print(exon.Name, exon_prots[biggest_exon])
             protein.append(exon_prots[biggest_exon])
             cds.append(exon_cds[biggest_exon])
 
@@ -195,6 +195,19 @@ class GeneAssembler:
         self.generate_statistics()
         self.nuke()
 
+
+@click.command()
+@click.option("-i", "--input", type=click.Path(exists=True), help="BED file")
+@click.option("-db", "--blastdb", help="Path to the BED file")
+@click.option("-e", "--exons", type=click.Path(exists=True), required=True)
+def assemble_gene(input: str, blastdb: str, exons: list[str]):
+
+    with open(exons) as file:
+        exons_list = [line.strip() for line in file]
+        print(exons_list)
+
+    gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list)
+    gene.run()
 
 if __name__ == "__main__":
 
