@@ -6,7 +6,7 @@ import os
 import warnings
 from Bio import SeqIO
 
-#warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 
 class GeneAssembler:
