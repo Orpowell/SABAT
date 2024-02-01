@@ -2,34 +2,35 @@ import pandas as pd
 import click
 import sys
 
+
 class BlastConverter:
-    def __init__(self,
-                 input: str,
-                 output: str,
-                 locus_size: int,
-                 exon_count: int,
-                 q_cov_threshold: float,
-                 refseq=False
-                ) -> None:
-    
+    def __init__(
+        self,
+        input: str,
+        output: str,
+        locus_size: int,
+        exon_count: int,
+        q_cov_threshold: float,
+        refseq=False,
+    ) -> None:
         self.cds_blast_data = pd.read_csv(
-        input,
-        sep="\t",
-        header=None,
-        names=[
-            "qseqid",
-            "sseqid",
-            "pident",
-            "length",
-            "mismatch",
-            "gapopen",
-            "qstart",
-            "qend",
-            "sstart",
-            "send",
-            "evalue",
-            "bitscore",
-            "qlen",
+            input,
+            sep="\t",
+            header=None,
+            names=[
+                "qseqid",
+                "sseqid",
+                "pident",
+                "length",
+                "mismatch",
+                "gapopen",
+                "qstart",
+                "qend",
+                "sstart",
+                "send",
+                "evalue",
+                "bitscore",
+                "qlen",
             ],
         )
         self.bed9 = pd.DataFrame()
@@ -38,14 +39,18 @@ class BlastConverter:
         self.exon_count = exon_count
         self.q_cov_threshold = q_cov_threshold
         self.refseq = refseq
-    
+
     def process_BLAST(self):
-            # Establish strand orientation and query coverage of BLAST hits
-        self.cds_blast_data["orientation"] = self.cds_blast_data.sstart < self.cds_blast_data.send
+        # Establish strand orientation and query coverage of BLAST hits
+        self.cds_blast_data["orientation"] = (
+            self.cds_blast_data.sstart < self.cds_blast_data.send
+        )
         self.cds_blast_data["strand"] = self.cds_blast_data.orientation.map(
             lambda x: "+" if x is True else "-"
         )
-        self.cds_blast_data["qcov"] = round(self.cds_blast_data.length / self.cds_blast_data.qlen, 2)
+        self.cds_blast_data["qcov"] = round(
+            self.cds_blast_data.length / self.cds_blast_data.qlen, 2
+        )
 
         # Correctly order start/end of BLAST hits for BED
         cond = self.cds_blast_data.sstart > self.cds_blast_data.send
@@ -79,7 +84,6 @@ class BlastConverter:
         self.bed9["itemRgb"]: str = "145,30,180"  # type: ignore
 
     def predict_gene_loci(self):
-
         gene_locus = 0
 
         for window in self.cds_blast_data.sort_values(["chromosome", "strand"]).rolling(
@@ -106,9 +110,9 @@ class BlastConverter:
                         "0,255,0",
                     ]
                     gene_locus += 1
-    
+
     def write_bed_file(self):
-            # Save output to bed file (formatted as tsv)
+        # Save output to bed file (formatted as tsv)
         self.bed9.to_csv(
             sys.stdout,
             sep="\t",
@@ -135,12 +139,39 @@ class BlastConverter:
 
 
 @click.command()
-@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="BLAST file in tabular format")
-@click.option("-e", "--exons", type=int, default=0, help="Expected number of exons in the gene")
-@click.option("-c", "--coverage", type=float, default = 1.1, help="Proportion of gene that must be covered  by a predicted locus")
-@click.option("-l", "--locus_size", type=int, default=1000, help="Expected size of the locus")
-@click.option("-r", "--refseq", type=bool, default=False, help="required to generate correctly formatted bed file for RefSeq assemblies")
+@click.option(
+    "-i",
+    "--input",
+    type=click.Path(exists=True),
+    required=True,
+    help="BLAST file in tabular format",
+)
+@click.option(
+    "-e", "--exons", type=int, default=0, help="Expected number of exons in the gene"
+)
+@click.option(
+    "-c",
+    "--coverage",
+    type=float,
+    default=1.1,
+    help="Proportion of gene that must be covered  by a predicted locus",
+)
+@click.option(
+    "-l", "--locus_size", type=int, default=1000, help="Expected size of the locus"
+)
+@click.option(
+    "-r",
+    "--refseq",
+    type=bool,
+    default=False,
+    help="required to generate correctly formatted bed file for RefSeq assemblies",
+)
 def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
-
-    converter = BlastConverter(input=input, exon_count=exons, q_cov_threshold=coverage, locus_size=size, output=output)
+    converter = BlastConverter(
+        input=input,
+        exon_count=exons,
+        q_cov_threshold=coverage,
+        locus_size=size,
+        output=output,
+    )
     converter.run()

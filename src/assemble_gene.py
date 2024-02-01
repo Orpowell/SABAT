@@ -101,9 +101,15 @@ class GeneAssembler:
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
 
-        self.exon_data.ORF1 = self.exon_data.ORF1.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
-        self.exon_data.ORF2 = self.exon_data.ORF2.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
-        self.exon_data.ORF3 = self.exon_data.ORF3.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
+        self.exon_data.ORF1 = self.exon_data.ORF1.map(
+            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
+        )
+        self.exon_data.ORF2 = self.exon_data.ORF2.map(
+            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
+        )
+        self.exon_data.ORF3 = self.exon_data.ORF3.map(
+            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
+        )
 
     def translate_ORFS(self):
         self.exon_data["prot1"] = self.exon_data.ORF1.map(
@@ -123,15 +129,15 @@ class GeneAssembler:
         last_exon = self.exon_list[-1]
 
         for index, exon in self.exon_data.iterrows():
-
             exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
             exon_prots = [exon.prot1, exon.prot2, exon.prot3]
             prot_len = list(map(len, exon_prots))
 
             if exon.Name == first_exon:
-                
-                valid_starts = [exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")]
-                
+                valid_starts = [
+                    exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")
+                ]
+
                 if len(valid_starts) == 0:
                     self.nuke()
                     print("No valid start codon in first exon")
@@ -139,24 +145,30 @@ class GeneAssembler:
 
                 elif len(valid_starts) == 1:
                     biggest_exon = valid_starts[0]
-                
+
             elif exon.Name == last_exon:
-                valid_stops = [exon_cds.index(e) for e in exon_cds if str(e).endswith(("TGA","TAA","TAG"))]
+                valid_stops = [
+                    exon_cds.index(e)
+                    for e in exon_cds
+                    if str(e).endswith(("TGA", "TAA", "TAG"))
+                ]
 
                 if len(valid_stops) == 0:
                     self.nuke()
                     print("No valid stop codon in first exon")
                     sys.exit(1)
-                
+
                 elif len(valid_stops) == 0:
                     biggest_exon = valid_stops[0]
-                
+
                 else:
-                    valid_prot_len = [length if n in valid_stops else 0 for n, length in enumerate(prot_len)]
+                    valid_prot_len = [
+                        length if n in valid_stops else 0
+                        for n, length in enumerate(prot_len)
+                    ]
                     biggest_exon = valid_prot_len.index(max(valid_prot_len))
 
             else:
-
                 biggest_exon = prot_len.index(max(prot_len))
 
             protein.append(exon_prots[biggest_exon])
@@ -201,7 +213,6 @@ class GeneAssembler:
 @click.option("-db", "--blastdb", help="Path to the BED file")
 @click.option("-e", "--exons", type=click.Path(exists=True), required=True)
 def assemble_gene(input: str, blastdb: str, exons: list[str]):
-
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
         print(exons_list)
