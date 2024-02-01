@@ -1,5 +1,6 @@
 import pandas as pd
 import click
+import sys
 
 class BlastConverter:
     def __init__(self,
@@ -36,7 +37,7 @@ class BlastConverter:
         self.locus_size = locus_size
         self.exon_count = exon_count
         self.q_cov_threshold = q_cov_threshold
-        self.refseq = False
+        self.refseq = refseq
     
     def process_BLAST(self):
             # Establish strand orientation and query coverage of BLAST hits
@@ -109,7 +110,7 @@ class BlastConverter:
     def write_bed_file(self):
             # Save output to bed file (formatted as tsv)
         self.bed9.to_csv(
-            self.output,
+            sys.stdout,
             sep="\t",
             header=False,
             index=False,
@@ -139,17 +140,8 @@ class BlastConverter:
 @click.option("-e", "--exons", type=int, default=0, help="Expected number of exons in the gene")
 @click.option("-c", "--coverage", type=float, default = 1.1, help="Proportion of gene that must be covered  by a predicted locus")
 @click.option("-l", "--locus_size", type=int, default=1000, help="Expected size of the locus")
-@click.option("-o", "--output", type=click.Path(exists=False), default="coverted_blast", help="Path to output file (recommended extension is .bed or .bed9)")
+@click.option("-r", "--refseq", type=bool, default=False, help="required to generate correctly formatted bed file for RefSeq assemblies")
 def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
+
     converter = BlastConverter(input=input, exon_count=exons, q_cov_threshold=coverage, locus_size=size, output=output)
     converter.run()
-
-if __name__ == "__main__":
-
-    vis = BlastConverter(input= "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/sh_Sr62_cds.blastn.mega",
-              exon_count= 9,
-              q_cov_threshold= 0.8,
-              locus_size = 10000,
-              output= "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/c2b_test_sh_sr62.mega.bed"
-            )
-    vis.run()
