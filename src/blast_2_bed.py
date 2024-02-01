@@ -129,70 +129,20 @@ if __name__ == "__main__":
     KINASE_QCOV = 0.8
 
     BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/Sr62_cds.blastn",
-        "Sr62_cds.bed",
-        exon_count=KINASE_EXONS,
-        q_cov_threshold=KINASE_QCOV,
-        locus_size=KINASE_LOCUS,
-        refseq=True,
-    )
-    BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/Sr62_cds_e0001.blastn",
-        "Sr62_cds_refined.bed",
-        exon_count=KINASE_EXONS,
-        q_cov_threshold=KINASE_QCOV,
-        locus_size=KINASE_LOCUS,
-        refseq=True,
-    )
-
-    BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/SrNLR_cds.blastn",
-        "SrNLR_cds.bed",
-        exon_count=NLR_EXONS,
-        locus_size=NLR_LOCUS,
-        q_cov_threshold=NLR_QCOV,
-        refseq=True,
-    )
-
-    BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/NLR_cds_e0001.blastn",
-        "SrNLR_cds_refined.bed",
-        exon_count=NLR_EXONS,
-        locus_size=NLR_LOCUS,
-        q_cov_threshold=NLR_QCOV,
-        refseq=True,
-    )
-
-    BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/NLR_cds_e0001.blastn.dcmega",
-        "SrNLR_cds_refined.mega.bed",
-        exon_count=NLR_EXONS,
-        locus_size=NLR_LOCUS,
-        q_cov_threshold=NLR_QCOV,
-        refseq=True,
-    )
-
-    BLAST2BED9(
-        "~/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/chinese_spring/Sr62_cds_e0001.blastn.dcmega",
-        "Sr62_cds_refined.mega.bed",
-        exon_count=KINASE_EXONS,
-        q_cov_threshold=KINASE_QCOV,
-        locus_size=KINASE_LOCUS,
-        refseq=True,
-    )
-
-    BLAST2BED9(
-        "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/longissima/NLR_cds_e0001.blastn.dcmega",
-        "longissima_nlr_cds_refined.mega.bed",
-        exon_count=NLR_EXONS,
-        q_cov_threshold=NLR_QCOV,
-        locus_size=NLR_LOCUS,
-    )
-
-    BLAST2BED9(
-        "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/longissima/Sr62_cds_e0001.blastn.dcmega",
-        "longissima_sr62_cds_refined.mega.bed",
+        "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/TA10171/Sr62_cds.blastn.mega",
+        "TA10171_sr62.mega.bed",
         exon_count=KINASE_EXONS,
         q_cov_threshold=KINASE_QCOV,
         locus_size=KINASE_LOCUS,
     )
+
+    BLAST2BED9(
+        "/home/powellor/Documents/projects/sr62_homeologues/analysis/blast_annotation_mapping/test_data/sharonensis/sh_Sr62_cds.blastn.mega",
+        "sh_sr62.mega.bed",
+        exon_count=KINASE_EXONS,
+        q_cov_threshold=KINASE_QCOV,
+        locus_size=KINASE_LOCUS,
+    )
+
+
+

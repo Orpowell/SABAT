@@ -6,7 +6,7 @@ import os
 import warnings
 from Bio import SeqIO
 
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
 
 
 class GeneAssembler:
@@ -33,7 +33,7 @@ class GeneAssembler:
         self.exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
 
         self.exon_data["Name"] = pd.Categorical(
-            self.exon_data["Name"], categories=self.exon_list, ordered=True
+            self.exon_data["Name"].copy(), categories=self.exon_list, ordered=True
         )
         self.exon_data.sort_values("Name", inplace=True)
 
@@ -89,15 +89,20 @@ class GeneAssembler:
                     lambda x: x.reverse_complement()
                 )
 
+    def trim_ORFs(self):
         self.exon_data["ORF1"] = self.exon_data.sequence.map(
             lambda x: x if len(x) % 3 == 0 else x[: -(len(x) % 3)]
         )
-        self.exon_data["ORF2"] = self.exon_data.sequence.map(
+        self.exon_data["ORF2"] = self.exon_data.sequence.copy().map(
             lambda x: x[1:] if len(x[1:]) % 3 == 0 else x[1 : -(len(x[1:]) % 3)]
         )
         self.exon_data["ORF3"] = self.exon_data.sequence.map(
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
+
+        self.exon_data.ORF1 = self.exon_data.ORF1.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
+        self.exon_data.ORF2 = self.exon_data.ORF2.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
+        self.exon_data.ORF3 = self.exon_data.ORF3.map(lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x)
 
     def translate_ORFS(self):
         self.exon_data["prot1"] = self.exon_data.ORF1.map(
@@ -115,7 +120,6 @@ class GeneAssembler:
         cds = []
         first_exon = self.exon_list[0]
         last_exon = self.exon_list[-1]
-        print(self.exon_data)
 
         for index, exon in self.exon_data.iterrows():
 
@@ -124,7 +128,6 @@ class GeneAssembler:
             prot_len = list(map(len, exon_prots))
 
             if exon.Name == first_exon:
-                print("first codon!")
                 
                 valid_starts = [exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")]
                 
@@ -137,8 +140,6 @@ class GeneAssembler:
                     biggest_exon = valid_starts[0]
                 
             elif exon.Name == last_exon:
-            
-                print("last codon!")
                 valid_stops = [exon_cds.index(e) for e in exon_cds if str(e).endswith(("TGA","TAA","TAG"))]
 
                 if len(valid_stops) == 0:
@@ -152,13 +153,12 @@ class GeneAssembler:
                 else:
                     valid_prot_len = [length if n in valid_stops else 0 for n, length in enumerate(prot_len)]
                     biggest_exon = valid_prot_len.index(max(valid_prot_len))
-                    print(valid_prot_len)
-                    print("rage")
 
             else:
 
                 biggest_exon = prot_len.index(max(prot_len))
 
+            print(exon.Name, exon_prots[biggest_exon])
             protein.append(exon_prots[biggest_exon])
             cds.append(exon_cds[biggest_exon])
 
@@ -189,6 +189,7 @@ class GeneAssembler:
     def run(self) -> None:
         self.extract_exon_sequences()
         self.load_ORFS_into_dataframe()
+        self.trim_ORFs()
         self.translate_ORFS()
         self.predict_protein()
         self.generate_statistics()
@@ -196,36 +197,39 @@ class GeneAssembler:
 
 
 if __name__ == "__main__":
-    CS_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/wheat_genomes/chinese_spring/cs_blastdb/cs_blastdb"
-    LONG_BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/sitopsis_genomes/longissima_blastdb/longissima_blastdb"
-    NLR_BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_nlr_cds_refined.mega.bed"
-    KINASE_BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/src/longissima_sr62_cds_refined.mega.bed"
-    NLR_EXON_LIST = ["exon_42", "exon_43", "exon_44"]
-    KINASE_EXON_LIST = [
-        "exon_11",
-        "exon_12",
-        "exon_13",
-        "exon_14",
-        "exon_15",
-        "exon_16",
-        "exon_17",
-        "exon_18",
-        "exon_19",
-        "exon_20",
-        "exon_21",
-    ]
-    KINASE_EXON_LIST = KINASE_EXON_LIST[::-1]
+
+    # OG TA10171 Sr62
+
+    print("kinase")
+    BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/tauschii_pangenome/TA10171_blast_db/TA10171_blast_db"
+    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/TA10171_sr62.mega.bed"
+    EXON_LIST = [f"exon_{i}" for i in range(29,40)][::-1]
     
-    print("\nAnalysing NLR\n")
     NLR_gene = GeneAssembler(
-        BED_FILE=NLR_BED_FILE, BLASTDB_PATH=LONG_BLASTDB_PATH, EXON_LIST=NLR_EXON_LIST
+        BED_FILE=BED_FILE, BLASTDB_PATH=BLASTDB_PATH, EXON_LIST=EXON_LIST
     )
     NLR_gene.run()
 
-    print("\nAnalysing Kinase\n")
-    KINASE_gene = GeneAssembler(
-        BED_FILE=KINASE_BED_FILE,
-        BLASTDB_PATH=LONG_BLASTDB_PATH,
-        EXON_LIST=KINASE_EXON_LIST,
+    # Edited Ta10171 Sr62
+
+    print("kinase")
+    BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/tauschii_pangenome/TA10171_blast_db/TA10171_blast_db"
+    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/TA10171_edited.mega.bed"
+    EXON_LIST = [f"exon_{i}" for i in range(29,40)][::-1]
+    
+    NLR_gene = GeneAssembler(
+        BED_FILE=BED_FILE, BLASTDB_PATH=BLASTDB_PATH, EXON_LIST=EXON_LIST
     )
-    KINASE_gene.run()
+    NLR_gene.run()
+
+    # Sharonensis Sr62
+
+    BLASTDB_PATH = "/home/powellor/Documents/projects/sr62_homeologues/data/sitopsis_genomes/sharonensis_blastdb/sharonensis_blastdb"
+    BED_FILE = "/home/powellor/Documents/projects/sr62_homeologues/scripts/SABAT_pipeline/SABAT/sh_sr62.mega.bed"
+    EXON_LIST = [f"exon_{i}" for i in range(33,44)][::-1]
+
+    
+    NLR_gene = GeneAssembler(
+        BED_FILE=BED_FILE, BLASTDB_PATH=BLASTDB_PATH, EXON_LIST=EXON_LIST
+    )
+    NLR_gene.run()
