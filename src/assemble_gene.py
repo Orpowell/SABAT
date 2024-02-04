@@ -209,9 +209,9 @@ class GeneAssembler:
 
 
 @click.command()
-@click.option("-i", "--input", type=click.Path(exists=True), help="BED file")
-@click.option("-db", "--blastdb", help="Path to the BED file")
-@click.option("-e", "--exons", type=click.Path(exists=True), required=True)
+@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
+@click.option("-db", "--blastdb", required=True, help="Path to the BLASTDB (including name)")
+@click.option("-e", "--exons", type=click.Path(exists=True), required=True, help="txt file with exons of interest")
 def assemble_gene(input: str, blastdb: str, exons: list[str]):
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
