@@ -188,10 +188,11 @@ class GeneAssembler:
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
 
-        print(self.protein, "\n", file=sys.stderr)
-        print(self.cds, file=sys.stderr)
+        print(self.protein, "\n", file=sys.stdout)
+        print(self.cds, file=sys.stdout)
 
     def generate_statistics(self) -> None:
+        logging.info("Gene successfully predicted!")
         logging.info(f"Predicted coverage: {self.exon_data.score.sum()}")
         logging.info(f"Protein length: {len(self.protein)}")
         logging.info(f"CDS gene length: {len(self.cds)}")
