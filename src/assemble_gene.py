@@ -6,14 +6,18 @@ import os
 import warnings
 from Bio import SeqIO
 import click
+import logging
 
 warnings.filterwarnings("ignore")
 
 
 class GeneAssembler:
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST) -> None:
+
+        self.input_file = BED_FILE
+
         self.bed = pd.read_csv(
-            BED_FILE,
+            self.input_file,
             sep="\t",
             header=None,
             names=[
@@ -48,7 +52,14 @@ class GeneAssembler:
 
         self.cds = ""
 
+        logging.info(f"Predicting gene from {self.input_file}...")
+        logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
+        logging.info("temporary files created will not be deleted if the program is stopped prematurely...")
+
     def extract_exon_sequences(self) -> None:
+
+        logging
+
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
@@ -71,13 +82,13 @@ class GeneAssembler:
             self.sequences_extracted = True
 
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
-            print(error)
+            logging.error(error)
             sys.exit(1)
 
     def load_ORFS_into_dataframe(self) -> None:
         if len(self.exon_data.strand.unique()) != 1:
             self.nuke()
-            print("Error: all exon strands must be identical!")
+            logging.error("all exon strands must be identical!")
             sys.exit(1)
 
         with open(self.exon_sequence_file.name) as handle:
@@ -140,7 +151,7 @@ class GeneAssembler:
 
                 if len(valid_starts) == 0:
                     self.nuke()
-                    print("No valid start codon in first exon")
+                    logging.error("No valid start codon in first exon")
                     sys.exit(1)
 
                 elif len(valid_starts) == 1:
@@ -155,7 +166,7 @@ class GeneAssembler:
 
                 if len(valid_stops) == 0:
                     self.nuke()
-                    print("No valid stop codon in first exon")
+                    logging.error("No valid stop codon in first exon")
                     sys.exit(1)
 
                 elif len(valid_stops) == 0:
@@ -177,26 +188,26 @@ class GeneAssembler:
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
 
-        print(self.protein, "\n")
-        print(self.cds)
+        print(self.protein, "\n", file=sys.stderr)
+        print(self.cds, file=sys.stderr)
 
     def generate_statistics(self) -> None:
-        print(f"\nPredicted coverage: {self.exon_data.score.sum()}")
-        print(f"Protein length: {len(self.protein)}")
-        print(f"CDS gene length: {len(self.cds)}")
+        logging.info(f"Predicted coverage: {self.exon_data.score.sum()}")
+        logging.info(f"Protein length: {len(self.protein)}")
+        logging.info(f"CDS gene length: {len(self.cds)}")
 
     def nuke(self) -> None:
         try:
             os.remove(self.batch_entry_file.name)
         except FileNotFoundError:
-            print("batch file not found")
+            logging.error("batch file not found")
 
         try:
             os.remove(self.exon_sequence_file.name)
         except FileNotFoundError:
-            print("sequences file not found")
+            logging.error("sequences file not found")
 
-        print("Temporary files deleted...")
+        logging.info("Temporary files deleted...")
 
     def run(self) -> None:
         self.extract_exon_sequences()
@@ -215,7 +226,6 @@ class GeneAssembler:
 def assemble_gene(input: str, blastdb: str, exons: list[str]):
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
-        print(exons_list)
 
     gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list)
     gene.run()
