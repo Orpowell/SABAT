@@ -208,7 +208,6 @@ class GeneAssembler:
 
 
     def generate_statistics(self) -> None:
-        logging.info("Gene successfully predicted!")
         logging.info(f"Predicted coverage: {self.exon_data.score.sum()}")
         logging.info(f"Protein length: {len(self.protein)}")
         logging.info(f"CDS gene length: {len(self.cds)}")
