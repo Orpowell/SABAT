@@ -195,11 +195,11 @@ class GeneAssembler:
         self.cds = "".join([str(seq) for seq in cds])
     
     def write_output_sequences(self):
-        with open(f"{self.output}_cds.fasta", "w+") as cds:
+        with open(f"{self.output}.cds.fasta", "w+") as cds:
             cds.write(f">{self.output}\n")
             cds.write(self.cds)
         
-        with open(f"{self.output}_prot.fasta", "w+") as prot:
+        with open(f"{self.output}.prot.fasta", "w+") as prot:
             prot.write(f">{self.output}\n")
             prot.write(self.protein)
 
