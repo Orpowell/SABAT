@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 
 class GeneAssembler:
-    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST) -> None:
+    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
 
         self.input_file = BED_FILE
 
@@ -43,6 +43,8 @@ class GeneAssembler:
         self.exon_data.sort_values("Name", inplace=True)
 
         self.blastdb: str = BLASTDB_PATH
+        
+        self.output: str = output
 
         self.batch_entry_file = tempfile.NamedTemporaryFile(delete=False)
 
@@ -191,9 +193,16 @@ class GeneAssembler:
 
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
+    
+    def write_output_sequences(self):
+        with open(f"{self.output}_cds.fasta", "w+") as cds:
+            cds.write(f">{self.output}_cds\n")
+            cds.write(self.cds)
+        
+        with open(f"{self.output}_prot.fasta", "w+") as prot:
+            prot.write(f">{self.output}_prot\n")
+            prot.write(self.protein)
 
-        print(self.protein, "\n", file=sys.stdout)
-        print(self.cds, file=sys.stdout)
 
     def generate_statistics(self) -> None:
         logging.info("Gene successfully predicted!")
@@ -220,6 +229,7 @@ class GeneAssembler:
         self.trim_ORFs()
         self.translate_ORFS()
         self.predict_protein()
+        self.write_output_sequences()
         self.generate_statistics()
         self.nuke()
 
@@ -228,12 +238,13 @@ class GeneAssembler:
 @click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
 @click.option("-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)")
 @click.option("-e", "--exons", type=click.Path(exists=True), required=True, help="txt file with exons of interest")
-def assemble_gene(input: str, blastdb: str, exons: list[str]):
+@click.option("-o", "--output", required=True, help="Base name for output files")
+def assemble_gene(input: str, blastdb: str, exons: list[str], output: str):
     """
     Assemble a gene from exons defined in a bed file
     """
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
 
-    gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list)
+    gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output)
     gene.run()
