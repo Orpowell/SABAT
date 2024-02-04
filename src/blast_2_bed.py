@@ -1,20 +1,21 @@
 import pandas as pd
 import click
 import sys
+import logging
 
 
 class BlastConverter:
     def __init__(
         self,
         input: str,
-        output: str,
         locus_size: int,
         exon_count: int,
         q_cov_threshold: float,
         refseq=False,
     ) -> None:
+        self.input_file = input
         self.cds_blast_data = pd.read_csv(
-            input,
+            self.input_file,
             sep="\t",
             header=None,
             names=[
@@ -34,11 +35,19 @@ class BlastConverter:
             ],
         )
         self.bed9 = pd.DataFrame()
-        self.output = output
         self.locus_size = locus_size
         self.exon_count = exon_count
         self.q_cov_threshold = q_cov_threshold
         self.refseq = refseq
+
+        logging.info(f"""
+                     Converting {self.input_file} to bed format...
+                     # of Exons: {self.exon_count}
+                     Locus size: {self.locus_size}
+                     Coverage threshold: {self.q_cov_threshold}
+                     RefSeq: {self.refseq}
+                     """
+                     )
 
     def process_BLAST(self):
         # Establish strand orientation and query coverage of BLAST hits
@@ -110,6 +119,7 @@ class BlastConverter:
                         "0,255,0",
                     ]
                     gene_locus += 1
+        logging.info(f"{gene_locus} gene loci predicted...")
 
     def write_bed_file(self):
         # Save output to bed file (formatted as tsv)
@@ -167,6 +177,9 @@ class BlastConverter:
     help="required to generate correctly formatted bed file for RefSeq assemblies",
 )
 def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
+    """
+    Convert BLAST results to BED and predict potential gene loci
+    """
     converter = BlastConverter(
         input=input,
         exon_count=exons,
