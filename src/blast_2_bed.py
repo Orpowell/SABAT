@@ -164,7 +164,7 @@ class BlastConverter:
     "--coverage",
     type=float,
     default=1.1,
-    help="Proportion of gene that must be covered  by a predicted locus",
+    help="Proportion of gene that must be covered by a predicted locus",
 )
 @click.option(
     "-l", "--locus_size", type=int, default=1000, help="Expected size of the locus"
@@ -178,7 +178,7 @@ class BlastConverter:
 )
 def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
     """
-    Convert BLAST results to BED and predict potential gene loci
+    Convert BLAST results to BED and predict gene loci
     """
     converter = BlastConverter(
         input=input,
