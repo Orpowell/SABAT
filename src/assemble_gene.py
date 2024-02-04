@@ -58,11 +58,13 @@ class GeneAssembler:
 
     def extract_exon_sequences(self) -> None:
 
-        logging
+        logging.info("Generating batch entry file...")
 
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
+
+        logging.info(f"extracting sequences from {self.blastdb}...")
 
         try:
             subprocess.run(
@@ -138,6 +140,8 @@ class GeneAssembler:
         cds = []
         first_exon = self.exon_list[0]
         last_exon = self.exon_list[-1]
+
+        logging.info("Predicting gene protein sequence and CDS...")
 
         for index, exon in self.exon_data.iterrows():
             exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
