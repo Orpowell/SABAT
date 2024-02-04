@@ -40,14 +40,11 @@ class BlastConverter:
         self.q_cov_threshold = q_cov_threshold
         self.refseq = refseq
 
-        logging.info(f"""
-                     Converting {self.input_file} to bed format...
-                     # of Exons: {self.exon_count}
-                     Locus size: {self.locus_size}
-                     Coverage threshold: {self.q_cov_threshold}
-                     RefSeq: {self.refseq}
-                     """
-                     )
+        logging.info(f"Converting {self.input_file} to bed format...")
+        logging.info(f"# of Exons: {self.exon_count}")
+        logging.info(f"Locus size: {self.locus_size}")
+        logging.info(f"Coverage threshold: {self.q_cov_threshold}")
+        logging.info(f"RefSeq: {self.refseq}")
 
     def process_BLAST(self):
         # Establish strand orientation and query coverage of BLAST hits
@@ -176,7 +173,7 @@ class BlastConverter:
     default=False,
     help="required to generate correctly formatted bed file for RefSeq assemblies",
 )
-def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
+def blast2bed(input: str, exons: int, coverage: int, locus_size: int, refseq: bool):
     """
     Convert BLAST results to BED and predict gene loci
     """
@@ -184,7 +181,7 @@ def blast2bed(input: str, exons: int, coverage: int, size: int, output: str):
         input=input,
         exon_count=exons,
         q_cov_threshold=coverage,
-        locus_size=size,
-        output=output,
+        locus_size=locus_size,
+        refseq=refseq,
     )
     converter.run()
