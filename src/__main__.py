@@ -13,6 +13,7 @@ logging.basicConfig(
 
 
 @click.group(help="S.A.B.A.T: Semi-Automatic BLAST Annotation Toolkit")
+@click.version_option("-v", "--version", message="SABAT 0.1.0")
 def cli() -> None:
     pass
 
