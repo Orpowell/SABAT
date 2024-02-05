@@ -2,6 +2,6 @@
 *.fasta
 *.fa
 .ruff_cache
-*.txt
 *.profile
 src/__pycache__/
+test_exons.txt
