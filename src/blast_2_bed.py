@@ -107,7 +107,7 @@ class BlastConverter:
                         window.sstart.min(),
                         window.send.max(),
                         "0,255,0",
-                        ""
+                        " ".join([f"exon_{i}" for i in window.index])
                     ]
                     gene_locus += 1
         logging.info(f"{gene_locus} gene loci predicted...")
@@ -129,6 +129,7 @@ class BlastConverter:
                 "thickStart",
                 "thickEnd",
                 "itemRgb",
+                "exonList"
             ],
         )
 
