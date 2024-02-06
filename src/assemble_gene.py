@@ -31,6 +31,7 @@ class AbstractGeneAssembler(ABC):
                 "thickStart",
                 "thickEnd",
                 "itemRgb",
+                "exon_list"
             ],
         )
 
@@ -149,7 +150,7 @@ class AbstractGeneAssembler(ABC):
 
                 if len(valid_starts) == 0:
                     self.nuke()
-                    logging.error("No valid start codon in first exon")
+                    logging.error("No valid start codon in last exon")
                     sys.exit(1)
 
                 elif len(valid_starts) == 1:
@@ -257,6 +258,7 @@ class LocusAssembler(AbstractGeneAssembler):
         self.locus = locus
     
     def filter_exon_data(self) -> None:
+        print(self.bed)
         local_min = self.bed.loc[self.bed.Name == self.locus].chromStart.iloc[0]
         local_max = self.bed.loc[self.bed.Name == self.locus].chromEnd.iloc[0]
 
