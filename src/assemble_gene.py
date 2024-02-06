@@ -7,6 +7,7 @@ import warnings
 from Bio import SeqIO
 import click
 import logging
+from abc import ABC
 
 warnings.filterwarnings("ignore")
 
