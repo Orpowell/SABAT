@@ -12,8 +12,8 @@ from abc import ABC
 warnings.filterwarnings("ignore")
 
 
-class AbstractGeneAssembler:
-    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
+class AbstractGeneAssembler(ABC):
+    def __init__(self, BED_FILE, BLASTDB_PATH, output) -> None:
 
         self.input_file = BED_FILE
 
@@ -34,14 +34,7 @@ class AbstractGeneAssembler:
             ],
         )
 
-        self.exon_list: list[str] = EXON_LIST
-
-        self.exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
-
-        self.exon_data["Name"] = pd.Categorical(
-            self.exon_data["Name"].copy(), categories=self.exon_list, ordered=True
-        )
-        self.exon_data.sort_values("Name", inplace=True)
+        self.exon_data = pd.DataFrame()
 
         self.blastdb: str = BLASTDB_PATH
         
@@ -56,8 +49,10 @@ class AbstractGeneAssembler:
         self.cds = ""
 
         logging.info(f"Predicting gene from {self.input_file}...")
-        logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
         logging.info("temporary files created will not be deleted if the program is stopped prematurely...")
+
+    def filter_exon_data(self) -> None:
+        pass
 
     def extract_exon_sequences(self) -> None:
 
@@ -91,10 +86,6 @@ class AbstractGeneAssembler:
             sys.exit(1)
 
     def load_ORFS_into_dataframe(self) -> None:
-        if len(self.exon_data.strand.unique()) != 1:
-            self.nuke()
-            logging.error("all exon strands must be identical!")
-            sys.exit(1)
 
         with open(self.exon_sequence_file.name) as handle:
             self.exon_data["sequence"] = [
@@ -207,7 +198,6 @@ class AbstractGeneAssembler:
             prot.write(f">{self.output}\n")
             prot.write(self.protein)
 
-
     def generate_statistics(self) -> None:
         logging.info(f"Predicted coverage: {self.exon_data.score.sum()}")
         logging.info(f"Protein length: {len(self.protein)}")
@@ -227,6 +217,7 @@ class AbstractGeneAssembler:
         logging.info("Temporary files deleted...")
 
     def run(self) -> None:
+        self.filter_exon_data()
         self.extract_exon_sequences()
         self.load_ORFS_into_dataframe()
         self.trim_ORFs()
@@ -237,10 +228,47 @@ class AbstractGeneAssembler:
         self.nuke()
 
 class GeneAssembler(AbstractGeneAssembler):
-    pass
+    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
+        super().__init__(BED_FILE, BLASTDB_PATH, output)
+        self.exon_list: list[str] = EXON_LIST
+        logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
+    
+    def filter_exon_data(self) -> None:
+
+        exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
+
+        exon_data["Name"] = pd.Categorical(
+            exon_data["Name"].copy(), categories=self.exon_list, ordered=True
+        )
+        
+        exon_data.sort_values("Name", inplace=True)
+
+        if len(exon_data.strand.unique()) != 1:
+            self.nuke()
+            logging.error("all exon strands must be identical!")
+            sys.exit(1)
+
+        self.exon_data = exon_data
+
 
 class LocusAssembler(AbstractGeneAssembler):
-    pass
+    def __init__(self, BED_FILE, BLASTDB_PATH, locus, output) -> None:
+        super().__init__(BED_FILE, BLASTDB_PATH, output)
+        self.locus = locus
+    
+    def filter_exon_data(self) -> None:
+        local_min = self.bed.loc[self.bed.Name == self.locus].chromStart.iloc[0]
+        local_max = self.bed.loc[self.bed.Name == self.locus].chromEnd.iloc[0]
+
+        exon_data = self.bed[(self.bed.chromStart >= local_min) & (self.bed.chromEnd <= local_max) & (self.bed.Name.map(lambda x: x.startswith("exon")))]
+
+        if exon_data.strand.unique()[0] == "-":
+            self.exon_list = list(exon_data.name)[::-1]
+
+        else:
+            self.exon_list = list(exon_data.Name)
+
+        self.exon_data = exon_data
 
 @click.command()
 @click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
@@ -255,4 +283,17 @@ def assemble_gene(input: str, blastdb: str, exons: list[str], output: str):
         exons_list = [line.strip() for line in file]
 
     gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output)
+    gene.run()
+
+
+@click.command()
+@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
+@click.option("-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)")
+@click.option("-l", "--locus", type=str, required=True, help="Name of the predicted locus")
+@click.option("-o", "--output", required=True, help="Base name for output files")
+def assemble_locus(input: str, blastdb: str, locus: str, output: str):
+    """
+    Assemble a gene from a locus defined in a bed file
+    """
+    gene = LocusAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, locus=locus, output=output)
     gene.run()
