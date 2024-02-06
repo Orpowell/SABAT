@@ -59,7 +59,13 @@ class AbstractGeneAssembler(ABC):
         pass
     
     def extend_flank3(self) -> None:
-        pass
+        print(self.exon_data)
+        
+        if self.strand == "+":
+            last_exon = int(self.exon_list[-1].split("_")[1])
+            self.exon_data.at[last_exon, "chromEnd"] = self.flank + self.exon_data.at[last_exon, "chromEnd"]
+        
+        print(self.exon_data)
 
 
     def extract_exon_sequences(self) -> None:
@@ -68,6 +74,7 @@ class AbstractGeneAssembler(ABC):
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
+                print(row.Name, f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
 
         logging.info(f"extracting sequences from {self.blastdb}...")
 
@@ -121,20 +128,19 @@ class AbstractGeneAssembler(ABC):
 
     def translate_ORFS(self):
         self.exon_data["prot1"] = self.exon_data.ORF1.map(
-            lambda x: x.translate(to_stop=True)
+            lambda x: x.translate(to_stop=True, stop_symbol="*")
         )
         self.exon_data["prot2"] = self.exon_data.ORF2.map(
-            lambda x: x.translate(to_stop=True)
+            lambda x: x.translate(to_stop=True, stop_symbol="*")
         )
         self.exon_data["prot3"] = self.exon_data.ORF3.map(
-            lambda x: x.translate(to_stop=True)
+            lambda x: x.translate(to_stop=True, stop_symbol="*")
         )
 
     def predict_protein(self):
         protein = []
         cds = []
         first_exon = self.exon_list[0]
-        last_exon = self.exon_list[-1]
 
         logging.info("Predicting gene protein sequence and CDS...")
 
@@ -155,29 +161,7 @@ class AbstractGeneAssembler(ABC):
 
                 elif len(valid_starts) == 1:
                     biggest_exon = valid_starts[0]
-
-            elif exon.Name == last_exon:
-                valid_stops = [
-                    exon_cds.index(e)
-                    for e in exon_cds
-                    if str(e).endswith(("TGA", "TAA", "TAG"))
-                ]
-
-                if len(valid_stops) == 0:
-                    self.nuke()
-                    logging.error("No valid stop codon in last exon")
-                    sys.exit(1)
-
-                elif len(valid_stops) == 0:
-                    biggest_exon = valid_stops[0]
-
-                else:
-                    valid_prot_len = [
-                        length if n in valid_stops else 0
-                        for n, length in enumerate(prot_len)
-                    ]
-                    biggest_exon = valid_prot_len.index(max(valid_prot_len))
-
+                    
             else:
                 biggest_exon = prot_len.index(max(prot_len))
 
@@ -218,6 +202,7 @@ class AbstractGeneAssembler(ABC):
 
     def run(self) -> None:
         self.filter_exon_data()
+        self.extend_flank3()
         self.extract_exon_sequences()
         self.load_ORFS_into_dataframe()
         self.trim_ORFs()
@@ -258,7 +243,6 @@ class LocusAssembler(AbstractGeneAssembler):
         self.locus = locus
 
     def filter_exon_data(self) -> None:
-        print(self.bed)
         local_min = self.bed.loc[self.bed.Name == self.locus].chromStart.iloc[0]
         local_max = self.bed.loc[self.bed.Name == self.locus].chromEnd.iloc[0]
 
