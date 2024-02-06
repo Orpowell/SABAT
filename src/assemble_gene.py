@@ -57,6 +57,10 @@ class AbstractGeneAssembler(ABC):
 
     def filter_exon_data(self) -> None:
         pass
+    
+    def extend_flank3(self) -> None:
+        pass
+
 
     def extract_exon_sequences(self) -> None:
         logging.info("Generating batch entry file...")
@@ -93,11 +97,6 @@ class AbstractGeneAssembler(ABC):
             self.exon_data["sequence"] = [
                 record.seq for record in SeqIO.parse(handle, "fasta")
             ]
-
-            if self.exon_data.strand.unique()[0] == "-":
-                self.exon_data.sequence = self.exon_data.sequence.map(
-                    lambda x: x.reverse_complement()
-                )
 
     def trim_ORFs(self):
         self.exon_data["ORF1"] = self.exon_data.sequence.map(
@@ -151,7 +150,7 @@ class AbstractGeneAssembler(ABC):
 
                 if len(valid_starts) == 0:
                     self.nuke()
-                    logging.error("No valid start codon in last exon")
+                    logging.error("No valid start codon in first exon")
                     sys.exit(1)
 
                 elif len(valid_starts) == 1:
@@ -166,7 +165,7 @@ class AbstractGeneAssembler(ABC):
 
                 if len(valid_stops) == 0:
                     self.nuke()
-                    logging.error("No valid stop codon in first exon")
+                    logging.error("No valid stop codon in last exon")
                     sys.exit(1)
 
                 elif len(valid_stops) == 0:
@@ -230,8 +229,8 @@ class AbstractGeneAssembler(ABC):
 
 
 class ExonAssembler(AbstractGeneAssembler):
-    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
-        super().__init__(BED_FILE, BLASTDB_PATH, output)
+    def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output, flank) -> None:
+        super().__init__(BED_FILE, BLASTDB_PATH, output, flank)
         self.exon_list: list[str] = EXON_LIST
         logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
 
@@ -250,11 +249,12 @@ class ExonAssembler(AbstractGeneAssembler):
             sys.exit(1)
 
         self.exon_data = exon_data
+        self.strand = self.exon_data.strand.unique()[0]
 
 
 class LocusAssembler(AbstractGeneAssembler):
-    def __init__(self, BED_FILE, BLASTDB_PATH, locus, output) -> None:
-        super().__init__(BED_FILE, BLASTDB_PATH, output)
+    def __init__(self, BED_FILE, BLASTDB_PATH, locus, output, flank) -> None:
+        super().__init__(BED_FILE, BLASTDB_PATH, output, flank)
         self.locus = locus
 
     def filter_exon_data(self) -> None:
@@ -275,6 +275,7 @@ class LocusAssembler(AbstractGeneAssembler):
             self.exon_list = list(exon_data.Name)
 
         self.exon_data = exon_data
+        self.strand = self.exon_data.strand.unique()[0]
 
 
 @click.command()
@@ -293,7 +294,7 @@ class LocusAssembler(AbstractGeneAssembler):
 )
 @click.option("-o", "--output", required=True, help="Base name for output files")
 @click.option(
-    "-f", "--flank", type=int, default=0, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
+    "-f", "--flank", type=int, default=0, required=False, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
 )
 def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flank: int):
     """
