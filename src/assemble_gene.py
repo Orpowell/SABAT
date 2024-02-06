@@ -14,7 +14,6 @@ warnings.filterwarnings("ignore")
 
 class AbstractGeneAssembler(ABC):
     def __init__(self, BED_FILE, BLASTDB_PATH, output) -> None:
-
         self.input_file = BED_FILE
 
         self.bed = pd.read_csv(
@@ -31,14 +30,14 @@ class AbstractGeneAssembler(ABC):
                 "thickStart",
                 "thickEnd",
                 "itemRgb",
-                "exon_list"
+                "exon_list",
             ],
         )
 
         self.exon_data = pd.DataFrame()
 
         self.blastdb: str = BLASTDB_PATH
-        
+
         self.output: str = output
 
         self.batch_entry_file = tempfile.NamedTemporaryFile(delete=False)
@@ -50,13 +49,14 @@ class AbstractGeneAssembler(ABC):
         self.cds = ""
 
         logging.info(f"Predicting gene from {self.input_file}...")
-        logging.info("temporary files created will not be deleted if the program is stopped prematurely...")
+        logging.info(
+            "temporary files created will not be deleted if the program is stopped prematurely..."
+        )
 
     def filter_exon_data(self) -> None:
         pass
 
     def extract_exon_sequences(self) -> None:
-
         logging.info("Generating batch entry file...")
 
         with open(self.batch_entry_file.name, "w+") as file:
@@ -87,7 +87,6 @@ class AbstractGeneAssembler(ABC):
             sys.exit(1)
 
     def load_ORFS_into_dataframe(self) -> None:
-
         with open(self.exon_sequence_file.name) as handle:
             self.exon_data["sequence"] = [
                 record.seq for record in SeqIO.parse(handle, "fasta")
@@ -186,14 +185,13 @@ class AbstractGeneAssembler(ABC):
 
         self.protein = "".join([str(seq) for seq in protein])
         self.cds = "".join([str(seq) for seq in cds])
-    
-    def write_output_sequences(self):
 
+    def write_output_sequences(self):
         logging.info(f"Writing CDS sequence to {self.output}.cds.fasta")
         with open(f"{self.output}.cds.fasta", "w+") as cds:
             cds.write(f">{self.output}\n")
             cds.write(self.cds)
-        
+
         logging.info(f"Writing protein sequence to {self.output}.prot.fasta")
         with open(f"{self.output}.prot.fasta", "w+") as prot:
             prot.write(f">{self.output}\n")
@@ -228,20 +226,20 @@ class AbstractGeneAssembler(ABC):
         self.generate_statistics()
         self.nuke()
 
+
 class ExonAssembler(AbstractGeneAssembler):
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
         super().__init__(BED_FILE, BLASTDB_PATH, output)
         self.exon_list: list[str] = EXON_LIST
         logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
-    
-    def filter_exon_data(self) -> None:
 
+    def filter_exon_data(self) -> None:
         exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
 
         exon_data["Name"] = pd.Categorical(
             exon_data["Name"].copy(), categories=self.exon_list, ordered=True
         )
-        
+
         exon_data.sort_values("Name", inplace=True)
 
         if len(exon_data.strand.unique()) != 1:
@@ -256,13 +254,17 @@ class LocusAssembler(AbstractGeneAssembler):
     def __init__(self, BED_FILE, BLASTDB_PATH, locus, output) -> None:
         super().__init__(BED_FILE, BLASTDB_PATH, output)
         self.locus = locus
-    
+
     def filter_exon_data(self) -> None:
         print(self.bed)
         local_min = self.bed.loc[self.bed.Name == self.locus].chromStart.iloc[0]
         local_max = self.bed.loc[self.bed.Name == self.locus].chromEnd.iloc[0]
 
-        exon_data = self.bed[(self.bed.chromStart >= local_min) & (self.bed.chromEnd <= local_max) & (self.bed.Name.map(lambda x: x.startswith("exon")))]
+        exon_data = self.bed[
+            (self.bed.chromStart >= local_min)
+            & (self.bed.chromEnd <= local_max)
+            & (self.bed.Name.map(lambda x: x.startswith("exon")))
+        ]
 
         if exon_data.strand.unique()[0] == "-":
             self.exon_list = list(exon_data.name)[::-1]
@@ -272,10 +274,21 @@ class LocusAssembler(AbstractGeneAssembler):
 
         self.exon_data = exon_data
 
+
 @click.command()
-@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
-@click.option("-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)")
-@click.option("-e", "--exons", type=click.Path(exists=True), required=True, help="txt file with exons of interest")
+@click.option(
+    "-i", "--input", type=click.Path(exists=True), required=True, help="bed file"
+)
+@click.option(
+    "-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)"
+)
+@click.option(
+    "-e",
+    "--exons",
+    type=click.Path(exists=True),
+    required=True,
+    help="txt file with exons of interest",
+)
 @click.option("-o", "--output", required=True, help="Base name for output files")
 def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
     """
@@ -284,18 +297,28 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
 
-    gene = ExonAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output)
+    gene = ExonAssembler(
+        BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output
+    )
     gene.run()
 
 
 @click.command()
-@click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
-@click.option("-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)")
-@click.option("-l", "--locus", type=str, required=True, help="Name of the predicted locus")
+@click.option(
+    "-i", "--input", type=click.Path(exists=True), required=True, help="bed file"
+)
+@click.option(
+    "-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)"
+)
+@click.option(
+    "-l", "--locus", type=str, required=True, help="Name of the predicted locus"
+)
 @click.option("-o", "--output", required=True, help="Base name for output files")
 def assemble_locus(input: str, blastdb: str, locus: str, output: str):
     """
     Assemble a gene from a locus defined in a bed file
     """
-    gene = LocusAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, locus=locus, output=output)
+    gene = LocusAssembler(
+        BED_FILE=input, BLASTDB_PATH=blastdb, locus=locus, output=output
+    )
     gene.run()

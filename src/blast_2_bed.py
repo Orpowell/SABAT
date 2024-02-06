@@ -66,8 +66,9 @@ class BlastConverter:
         self.cds_blast_data.sort_values(by="sstart", inplace=True)
         self.cds_blast_data.reset_index(drop=True, inplace=True)
 
-        self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map(lambda x: x.split("|")[1] if "|" in x else x) 
-
+        self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map(
+            lambda x: x.split("|")[1] if "|" in x else x
+        )
 
     def convert_BLAST_to_BED(self):
         # Fill columns 1-9
@@ -107,7 +108,7 @@ class BlastConverter:
                         window.sstart.min(),
                         window.send.max(),
                         "0,255,0",
-                        " ".join([f"exon_{i}" for i in window.index])
+                        " ".join([f"exon_{i}" for i in window.index]),
                     ]
                     gene_locus += 1
         logging.info(f"{gene_locus} gene loci predicted...")
@@ -129,7 +130,7 @@ class BlastConverter:
                 "thickStart",
                 "thickEnd",
                 "itemRgb",
-                "exonList"
+                "exonList",
             ],
         )
 
@@ -166,9 +167,6 @@ def blast2bed(input: str, exons: int, coverage: int, locus_size: int):
     Convert BLAST results to BED and predict gene loci
     """
     converter = BlastConverter(
-        input=input,
-        exon_count=exons,
-        q_cov_threshold=coverage,
-        locus_size=locus_size
+        input=input, exon_count=exons, q_cov_threshold=coverage, locus_size=locus_size
     )
     converter.run()
