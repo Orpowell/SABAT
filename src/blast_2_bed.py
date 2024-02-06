@@ -68,14 +68,8 @@ class BlastConverter:
         self.cds_blast_data.sort_values(by="sstart", inplace=True)
         self.cds_blast_data.reset_index(drop=True, inplace=True)
 
-        # Remove any formatting from BLASTDB from sequence IDs
-        if self.refseq:
-            self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map(  # type: ignore
-                lambda x: x.split("|")[1]
-            )
+        self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map(lambda x: x.split("|")[1] if "|" in x else x) 
 
-        else:
-            self.cds_blast_data["chromosome"] = self.cds_blast_data.sseqid
 
     def convert_BLAST_to_BED(self):
         # Fill columns 1-9
