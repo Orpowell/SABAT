@@ -38,13 +38,11 @@ class BlastConverter:
         self.locus_size = locus_size
         self.exon_count = exon_count
         self.q_cov_threshold = q_cov_threshold
-        self.refseq = refseq
 
         logging.info(f"Converting {self.input_file} to bed format...")
         logging.info(f"# of Exons: {self.exon_count}")
         logging.info(f"Locus size: {self.locus_size}")
         logging.info(f"Coverage threshold: {self.q_cov_threshold}")
-        logging.info(f"RefSeq: {self.refseq}")
 
     def process_BLAST(self):
         # Establish strand orientation and query coverage of BLAST hits
@@ -82,6 +80,7 @@ class BlastConverter:
         self.bed9["thickStart"]: int = self.cds_blast_data.sstart  # type: ignore
         self.bed9["thickEnd"]: int = self.cds_blast_data.send  # type: ignore
         self.bed9["itemRgb"]: str = "145,30,180"  # type: ignore
+        self.bed9["exonList"]: str = ""
 
     def predict_gene_loci(self):
         gene_locus = 0
@@ -108,6 +107,7 @@ class BlastConverter:
                         window.sstart.min(),
                         window.send.max(),
                         "0,255,0",
+                        ""
                     ]
                     gene_locus += 1
         logging.info(f"{gene_locus} gene loci predicted...")
@@ -160,14 +160,7 @@ class BlastConverter:
 @click.option(
     "-l", "--locus_size", type=int, default=1000, help="Expected size of the locus"
 )
-@click.option(
-    "-r",
-    "--refseq",
-    type=bool,
-    default=False,
-    help="required to generate correctly formatted bed file for RefSeq assemblies",
-)
-def blast2bed(input: str, exons: int, coverage: int, locus_size: int, refseq: bool):
+def blast2bed(input: str, exons: int, coverage: int, locus_size: int):
     """
     Convert BLAST results to BED and predict gene loci
     """
@@ -175,7 +168,6 @@ def blast2bed(input: str, exons: int, coverage: int, locus_size: int, refseq: bo
         input=input,
         exon_count=exons,
         q_cov_threshold=coverage,
-        locus_size=locus_size,
-        refseq=refseq,
+        locus_size=locus_size
     )
     converter.run()
