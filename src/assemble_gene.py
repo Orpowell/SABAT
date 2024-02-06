@@ -12,7 +12,7 @@ from abc import ABC
 warnings.filterwarnings("ignore")
 
 
-class GeneAssembler:
+class AbstractGeneAssembler:
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
 
         self.input_file = BED_FILE
@@ -236,6 +236,11 @@ class GeneAssembler:
         self.generate_statistics()
         self.nuke()
 
+class GeneAssembler(AbstractGeneAssembler):
+    pass
+
+class LocusAssembler(AbstractGeneAssembler):
+    pass
 
 @click.command()
 @click.option("-i", "--input", type=click.Path(exists=True), required=True, help="bed file")
