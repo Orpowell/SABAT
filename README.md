@@ -69,3 +69,4 @@ Command:
 - stderr logging for all commands
 - ordered stdout for assemble-gene
 - edit and unedited outputs for assemble-gene (will need to output results as file rather than to std out)
+- chromosome headers should not contain the character |
