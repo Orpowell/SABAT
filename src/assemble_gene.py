@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 
 
 class AbstractGeneAssembler(ABC):
-    def __init__(self, BED_FILE, BLASTDB_PATH, output) -> None:
+    def __init__(self, BED_FILE, BLASTDB_PATH, output, flank) -> None:
         self.input_file = BED_FILE
 
         self.bed = pd.read_csv(
@@ -47,6 +47,8 @@ class AbstractGeneAssembler(ABC):
         self.protein = ""
 
         self.cds = ""
+
+        self.flank = flank
 
         logging.info(f"Predicting gene from {self.input_file}...")
         logging.info(
@@ -290,7 +292,10 @@ class LocusAssembler(AbstractGeneAssembler):
     help="txt file with exons of interest",
 )
 @click.option("-o", "--output", required=True, help="Base name for output files")
-def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
+@click.option(
+    "-f", "--flank", type=int, default=0, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
+)
+def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flank: int):
     """
     Assemble a gene from exons defined in a bed file
     """
@@ -298,7 +303,7 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
         exons_list = [line.strip() for line in file]
 
     gene = ExonAssembler(
-        BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output
+        BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output, flank=flank
     )
     gene.run()
 
@@ -314,11 +319,14 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
     "-l", "--locus", type=str, required=True, help="Name of the predicted locus"
 )
 @click.option("-o", "--output", required=True, help="Base name for output files")
-def assemble_locus(input: str, blastdb: str, locus: str, output: str):
+@click.option(
+    "-f", "--flank", type=int, default=0, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
+)
+def assemble_locus(input: str, blastdb: str, locus: str, output: str, flank: int):
     """
     Assemble a gene from a locus defined in a bed file
     """
     gene = LocusAssembler(
-        BED_FILE=input, BLASTDB_PATH=blastdb, locus=locus, output=output
+        BED_FILE=input, BLASTDB_PATH=blastdb, locus=locus, output=output, flank=flank
     )
     gene.run()
