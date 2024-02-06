@@ -227,7 +227,7 @@ class AbstractGeneAssembler(ABC):
         self.generate_statistics()
         self.nuke()
 
-class GeneAssembler(AbstractGeneAssembler):
+class ExonAssembler(AbstractGeneAssembler):
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output) -> None:
         super().__init__(BED_FILE, BLASTDB_PATH, output)
         self.exon_list: list[str] = EXON_LIST
@@ -275,14 +275,14 @@ class LocusAssembler(AbstractGeneAssembler):
 @click.option("-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)")
 @click.option("-e", "--exons", type=click.Path(exists=True), required=True, help="txt file with exons of interest")
 @click.option("-o", "--output", required=True, help="Base name for output files")
-def assemble_gene(input: str, blastdb: str, exons: list[str], output: str):
+def assemble_exons(input: str, blastdb: str, exons: list[str], output: str):
     """
     Assemble a gene from exons defined in a bed file
     """
     with open(exons) as file:
         exons_list = [line.strip() for line in file]
 
-    gene = GeneAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output)
+    gene = ExonAssembler(BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output)
     gene.run()
 
 
