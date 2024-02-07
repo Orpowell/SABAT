@@ -217,7 +217,7 @@ class ExonAssembler(AbstractGeneAssembler):
     def __init__(self, BED_FILE, BLASTDB_PATH, EXON_LIST, output, flank) -> None:
         super().__init__(BED_FILE, BLASTDB_PATH, output, flank)
         self.exon_list: list[str] = EXON_LIST
-        logging.info(f"Analysing exons: {" ".join([exon for exon in self.exon_list])}")
+        logging.info(f"Analysing exons: {' '.join([exon for exon in self.exon_list])}")
 
     def filter_exon_data(self) -> None:
         exon_data = self.bed[self.bed.Name.isin(self.exon_list)]
