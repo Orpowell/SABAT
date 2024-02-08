@@ -135,9 +135,6 @@ class AbstractGeneAssembler(ABC):
                 for exon in exon_cds:
                     codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
                     starts = [codons[n:] for n, codon in enumerate(codons) if codon == "ATG"]
-                    for start in starts:    
-                        print(start)
-                        print('\n')
                     starts_stops = []
                     
                     for seq in starts:
@@ -152,7 +149,6 @@ class AbstractGeneAssembler(ABC):
                         starts_stops.append(min(first_stops))
 
                     stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
-                    print(stopped)
                     lengths = list(map(len, stopped))
                     biggest = lengths.index(max(lengths))
                     best_orfs.append("".join([str(codon) for codon in stopped[biggest]]))
@@ -227,7 +223,7 @@ class AbstractGeneAssembler(ABC):
         if not self.cds.startswith("ATG"): 
             self.nuke()
 
-        if not self.endswith(("TAA", "TAG", "TGA")):
+        if not self.cds.endswith(("TAA", "TAG", "TGA")):
             logging.info("CDS doesn't contain a valid stop codon...")
             logging.info("Shutting down")
             self.nuke()
@@ -277,6 +273,7 @@ class AbstractGeneAssembler(ABC):
         self.load_exons_into_dataframe()
         self.trim_ORFs()
         self.predict_CDS()
+        self.check_CDS()
         self.predict_protein()
         self.write_output_sequences()
         self.generate_statistics()
