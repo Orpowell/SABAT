@@ -116,16 +116,6 @@ class AbstractGeneAssembler(ABC):
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
 
-        self.exon_data.ORF1 = self.exon_data.ORF1.map(
-            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
-        )
-        self.exon_data.ORF2 = self.exon_data.ORF2.map(
-            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
-        )
-        self.exon_data.ORF3 = self.exon_data.ORF3.map(
-            lambda x: x[3:] if str(x).startswith(("TAG", "TAA", "TGA")) else x
-        )
-
     def translate_ORFS(self):
         self.exon_data["prot1"] = self.exon_data.ORF1.map(
             lambda x: x.translate(to_stop=True, stop_symbol="*")
