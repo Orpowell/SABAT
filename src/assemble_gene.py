@@ -59,13 +59,13 @@ class AbstractGeneAssembler(ABC):
         pass
     
     def extend_flank3(self) -> None:
-        print(self.exon_data)
-        
         if self.strand == "+":
             last_exon = int(self.exon_list[-1].split("_")[1])
             self.exon_data.at[last_exon, "chromEnd"] = self.flank + self.exon_data.at[last_exon, "chromEnd"]
         
-        print(self.exon_data)
+        else:
+            last_exon = int(self.exon_list[-1].split("_")[1])
+            self.exon_data.at[last_exon, "chromStart"] = self.exon_data.at[last_exon, "chromEnd"] - self.flank
 
 
     def extract_exon_sequences(self) -> None:
@@ -74,7 +74,6 @@ class AbstractGeneAssembler(ABC):
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
-                print(row.Name, f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
 
         logging.info(f"extracting sequences from {self.blastdb}...")
 
@@ -115,6 +114,13 @@ class AbstractGeneAssembler(ABC):
         self.exon_data["ORF3"] = self.exon_data.sequence.map(
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
+    
+    def process_ORFS(self):
+        first_exon = self.exon_list[0]
+        last_exon = self.exon_list[1]
+
+        print(first_exon)
+
 
     def translate_ORFS(self):
         self.exon_data["prot1"] = self.exon_data.ORF1.map(
@@ -196,10 +202,11 @@ class AbstractGeneAssembler(ABC):
         self.extract_exon_sequences()
         self.load_ORFS_into_dataframe()
         self.trim_ORFs()
-        self.translate_ORFS()
-        self.predict_protein()
-        self.write_output_sequences()
-        self.generate_statistics()
+        self.process_ORFS()
+        #self.translate_ORFS()
+        #self.predict_protein()
+        #self.write_output_sequences()
+        #self.generate_statistics()
         self.nuke()
 
 
