@@ -62,7 +62,8 @@ class AbstractGeneAssembler(ABC):
         with open(self.exon_sequence_file.name) as handle:
             if self.strand == "-":
                 self.exon_data["sequence"] = [
-                    record.seq.reverse_complement() for record in SeqIO.parse(handle, "fasta")
+                    record.seq.reverse_complement()
+                    for record in SeqIO.parse(handle, "fasta")
                 ]
             else:
                 self.exon_data["sequence"] = [
@@ -75,7 +76,6 @@ class AbstractGeneAssembler(ABC):
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
-
 
         logging.info(f"extracting sequences from {self.blastdb}...")
 
@@ -99,18 +99,22 @@ class AbstractGeneAssembler(ABC):
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
             logging.error(error)
             sys.exit(1)
-    
+
     def filter_exon_data(self) -> None:
         pass
-    
+
     def extend_flank3(self) -> None:
         if self.strand == "+":
             last_exon = int(self.exon_list[-1].split("_")[1])
-            self.exon_data.at[last_exon, "chromEnd"] = self.flank + self.exon_data.at[last_exon, "chromEnd"]
-        
+            self.exon_data.at[last_exon, "chromEnd"] = (
+                self.flank + self.exon_data.at[last_exon, "chromEnd"]
+            )
+
         else:
             last_exon = int(self.exon_list[-1].split("_")[1])
-            self.exon_data.at[last_exon, "chromStart"] = self.exon_data.at[last_exon, "chromStart"] - self.flank
+            self.exon_data.at[last_exon, "chromStart"] = (
+                self.exon_data.at[last_exon, "chromStart"] - self.flank
+            )
 
     def trim_ORFs(self):
         self.exon_data["ORF1"] = self.exon_data.sequence.map(
@@ -122,7 +126,7 @@ class AbstractGeneAssembler(ABC):
         self.exon_data["ORF3"] = self.exon_data.sequence.map(
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
-    
+
     def predict_CDS(self):
         first_exon = self.exon_list[0]
         last_exon = self.exon_list[-1]
@@ -133,10 +137,12 @@ class AbstractGeneAssembler(ABC):
             best_orfs = []
             if exon.Name == first_exon:
                 for exon in exon_cds:
-                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
-                    starts = [codons[n:] for n, codon in enumerate(codons) if codon == "ATG"]
+                    codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
+                    starts = [
+                        codons[n:] for n, codon in enumerate(codons) if codon == "ATG"
+                    ]
                     starts_stops = []
-                    
+
                     for seq in starts:
                         first_stops = []
                         for stop in ["TGA", "TAG", "TAA"]:
@@ -145,28 +151,34 @@ class AbstractGeneAssembler(ABC):
                                 first_stops.append(s)
                             except ValueError:
                                 first_stops.append(len(seq))
-                        
+
                         starts_stops.append(min(first_stops))
 
                     stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
                     lengths = list(map(len, stopped))
                     biggest = lengths.index(max(lengths))
-                    best_orfs.append("".join([str(codon) for codon in stopped[biggest]]))
-                
+                    best_orfs.append(
+                        "".join([str(codon) for codon in stopped[biggest]])
+                    )
+
                 lengths = list(map(len, best_orfs))
                 max_len = lengths.index(max(lengths))
                 cds.append(str(best_orfs[max_len]))
-                            
+
             elif exon.Name == last_exon:
                 for exon in exon_cds:
-                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
-                    ranges = [n for n, codon in enumerate(codons) if codon in ["TAG", "TAA", "TGA"]]
+                    codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
+                    ranges = [
+                        n
+                        for n, codon in enumerate(codons)
+                        if codon in ["TAG", "TAA", "TGA"]
+                    ]
 
                     if len(ranges) == 0:
                         best_orfs.append(exon)
                         continue
 
-                    if ranges[-1] != len(codons)-1:
+                    if ranges[-1] != len(codons) - 1:
                         ranges.append(len(codons))
 
                     start = 0
@@ -175,31 +187,38 @@ class AbstractGeneAssembler(ABC):
 
                     for pos in ranges:
                         end = pos
-                        exon = codons[start:end+1]
+                        exon = codons[start : end + 1]
                         if len(exon) > len(biggest):
                             biggest = exon
 
-                        start = end +1
+                        start = end + 1
 
                     best_orfs.append("".join(map(str, biggest)))
                 print(best_orfs)
-                lengths = [len(exon) if str(exon).endswith(("TAG", "TGA", "TAA")) else 0 for exon in best_orfs]
+                lengths = [
+                    len(exon) if str(exon).endswith(("TAG", "TGA", "TAA")) else 0
+                    for exon in best_orfs
+                ]
                 print(lengths)
                 max_len = lengths.index(max(lengths))
                 print(max_len)
                 print(best_orfs[max_len])
                 cds.append(best_orfs[max_len])
-                    
+
             else:
                 for exon in exon_cds:
-                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
-                    ranges = [n for n, codon in enumerate(codons) if codon in ["TAG", "TAA", "TGA"]]
+                    codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
+                    ranges = [
+                        n
+                        for n, codon in enumerate(codons)
+                        if codon in ["TAG", "TAA", "TGA"]
+                    ]
 
                     if len(ranges) == 0:
                         best_orfs.append(exon)
                         continue
 
-                    if ranges[-1] != len(codons)-1:
+                    if ranges[-1] != len(codons) - 1:
                         ranges.append(len(codons))
 
                     start = 0
@@ -212,20 +231,19 @@ class AbstractGeneAssembler(ABC):
                         if len(exon) > len(biggest):
                             biggest = exon
 
-                        start = end +1
+                        start = end + 1
 
                     best_orfs.append("".join(map(str, biggest)))
-                
+
                 lengths = list(map(len, best_orfs))
                 max_len = lengths.index(max(lengths))
                 cds.append(str(best_orfs[max_len]))
 
-        
         self.cds = "".join([str(exon) for exon in cds])
         print(self.cds)
 
     def check_CDS(self):
-        if not self.cds.startswith("ATG"): 
+        if not self.cds.startswith("ATG"):
             self.nuke()
 
         if not self.cds.endswith(("TAA", "TAG", "TGA")):
@@ -325,14 +343,13 @@ class LocusAssembler(AbstractGeneAssembler):
         if self.strand == "-":
             self.exon_list = list(exon_data.Name)[::-1]
             exon_data["Name"] = pd.Categorical(
-            exon_data["Name"].copy(), categories=self.exon_list, ordered=True
+                exon_data["Name"].copy(), categories=self.exon_list, ordered=True
             )
             exon_data.sort_values(by="Name", inplace=True)
 
         else:
             self.exon_list = list(exon_data.Name)
 
-        
         self.exon_data = exon_data
         self.strand = self.exon_data.strand.unique()[0]
 
@@ -353,7 +370,12 @@ class LocusAssembler(AbstractGeneAssembler):
 )
 @click.option("-o", "--output", required=True, help="Base name for output files")
 @click.option(
-    "-f", "--flank", type=int, default=0, required=False, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
+    "-f",
+    "--flank",
+    type=int,
+    default=0,
+    required=False,
+    help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)",
 )
 def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flank: int):
     """
@@ -363,7 +385,11 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flan
         exons_list = [line.strip() for line in file]
 
     gene = ExonAssembler(
-        BED_FILE=input, BLASTDB_PATH=blastdb, EXON_LIST=exons_list, output=output, flank=flank
+        BED_FILE=input,
+        BLASTDB_PATH=blastdb,
+        EXON_LIST=exons_list,
+        output=output,
+        flank=flank,
     )
     gene.run()
 
@@ -380,7 +406,11 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flan
 )
 @click.option("-o", "--output", required=True, help="Base name for output files")
 @click.option(
-    "-f", "--flank", type=int, default=0, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)"
+    "-f",
+    "--flank",
+    type=int,
+    default=0,
+    help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)",
 )
 def assemble_locus(input: str, blastdb: str, locus: str, output: str, flank: int):
     """
