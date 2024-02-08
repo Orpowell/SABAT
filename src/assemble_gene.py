@@ -117,9 +117,82 @@ class AbstractGeneAssembler(ABC):
     
     def process_ORFS(self):
         first_exon = self.exon_list[0]
-        last_exon = self.exon_list[1]
+        last_exon = self.exon_list[-1]
 
-        print(first_exon)
+        cds = []
+
+        for index, exon in self.exon_data.iterrows():
+            exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
+            best_orfs = []
+
+            if exon.Name == first_exon:
+                print("first")
+                pass
+            
+            elif exon.Name == last_exon:
+                print("last")
+                for exon in exon_cds:
+                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
+                    ranges = [n for n, codon in enumerate(codons) if codon in ["TAG", "TAA", "TGA"]]
+
+                    if len(ranges) == 0:
+                        best_orfs.append(exon)
+                        continue
+
+                    if ranges[-1] != len(codons)-1:
+                        ranges.append(len(codons))
+
+                    start = 0
+                    end = 0
+                    biggest = []
+
+                    for pos in ranges:
+                        end = pos
+                        exon = codons[start:end+1]
+                        if len(exon) > len(biggest):
+                            biggest = exon
+
+                        start = end +1
+
+                    best_orfs.append("".join(map(str, biggest)))
+                
+                lengths = [len(exon) for exon in best_orfs if exon.endswith(("TAG", "TGA", "TAA"))]
+                max_len = lengths.index(max(lengths))
+                cds.append(best_orfs[max_len])
+                    
+            else:
+                for exon in exon_cds:
+                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
+                    ranges = [n for n, codon in enumerate(codons) if codon in ["TAG", "TAA", "TGA"]]
+
+                    if len(ranges) == 0:
+                        best_orfs.append(exon)
+                        continue
+
+                    if ranges[-1] != len(codons)-1:
+                        ranges.append(len(codons))
+
+                    start = 0
+                    end = 0
+                    biggest = []
+
+                    for pos in ranges:
+                        end = pos
+                        exon = codons[start:end]
+                        if len(exon) > len(biggest):
+                            biggest = exon
+
+                        start = end +1
+
+                    best_orfs.append("".join(map(str, biggest)))
+                
+                lengths = list(map(len, best_orfs))
+                max_len = lengths.index(max(lengths))
+                cds.append(str(best_orfs[max_len]))
+
+        print("".join(cds))
+
+
 
 
     def translate_ORFS(self):
