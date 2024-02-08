@@ -56,17 +56,18 @@ class AbstractGeneAssembler(ABC):
             "temporary files created will not be deleted if the program is stopped prematurely..."
         )
 
-    def filter_exon_data(self) -> None:
-        pass
-    
-    def extend_flank3(self) -> None:
-        if self.strand == "+":
-            last_exon = int(self.exon_list[-1].split("_")[1])
-            self.exon_data.at[last_exon, "chromEnd"] = self.flank + self.exon_data.at[last_exon, "chromEnd"]
-        
-        else:
-            last_exon = int(self.exon_list[-1].split("_")[1])
-            self.exon_data.at[last_exon, "chromStart"] = self.exon_data.at[last_exon, "chromEnd"] - self.flank
+        self.strand = ""
+
+    def load_exons_into_dataframe(self) -> None:
+        with open(self.exon_sequence_file.name) as handle:
+            if self.strand == "-":
+                self.exon_data["sequence"] = [
+                    record.seq.reverse_complement() for record in SeqIO.parse(handle, "fasta")
+                ]
+            else:
+                self.exon_data["sequence"] = [
+                    record.seq for record in SeqIO.parse(handle, "fasta")
+                ]
 
     def extract_exon_sequences(self) -> None:
         logging.info("Generating batch entry file...")
@@ -74,6 +75,7 @@ class AbstractGeneAssembler(ABC):
         with open(self.batch_entry_file.name, "w+") as file:
             for index, row in self.exon_data.iterrows():
                 file.write(f"{row.chrom} {row.chromStart}-{row.chromEnd}\n")
+
 
         logging.info(f"extracting sequences from {self.blastdb}...")
 
@@ -97,12 +99,18 @@ class AbstractGeneAssembler(ABC):
         except (subprocess.CalledProcessError, FileNotFoundError) as error:
             logging.error(error)
             sys.exit(1)
-
-    def load_ORFS_into_dataframe(self) -> None:
-        with open(self.exon_sequence_file.name) as handle:
-            self.exon_data["sequence"] = [
-                record.seq for record in SeqIO.parse(handle, "fasta")
-            ]
+    
+    def filter_exon_data(self) -> None:
+        pass
+    
+    def extend_flank3(self) -> None:
+        if self.strand == "+":
+            last_exon = int(self.exon_list[-1].split("_")[1])
+            self.exon_data.at[last_exon, "chromEnd"] = self.flank + self.exon_data.at[last_exon, "chromEnd"]
+        
+        else:
+            last_exon = int(self.exon_list[-1].split("_")[1])
+            self.exon_data.at[last_exon, "chromStart"] = self.exon_data.at[last_exon, "chromStart"] - self.flank
 
     def trim_ORFs(self):
         self.exon_data["ORF1"] = self.exon_data.sequence.map(
@@ -118,23 +126,23 @@ class AbstractGeneAssembler(ABC):
     def predict_CDS(self):
         first_exon = self.exon_list[0]
         last_exon = self.exon_list[-1]
-
         cds = []
 
         for index, exon in self.exon_data.iterrows():
             exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
             best_orfs = []
-
             if exon.Name == first_exon:
                 for exon in exon_cds:
                     codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
-
                     starts = [codons[n:] for n, codon in enumerate(codons) if codon == "ATG"]
+                    for start in starts:    
+                        print(start)
+                        print('\n')
                     starts_stops = []
                     
                     for seq in starts:
                         first_stops = []
-                        for stop in ["TGA", "TAG", "TTA"]:
+                        for stop in ["TGA", "TAG", "TAA"]:
                             try:
                                 s = seq.index(stop)
                                 first_stops.append(s)
@@ -144,6 +152,7 @@ class AbstractGeneAssembler(ABC):
                         starts_stops.append(min(first_stops))
 
                     stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
+                    print(stopped)
                     lengths = list(map(len, stopped))
                     biggest = lengths.index(max(lengths))
                     best_orfs.append("".join([str(codon) for codon in stopped[biggest]]))
@@ -212,7 +221,7 @@ class AbstractGeneAssembler(ABC):
                 max_len = lengths.index(max(lengths))
                 cds.append(str(best_orfs[max_len]))
 
-        self.cds = "".join(cds)
+        self.cds = "".join([str(exon) for exon in cds])
 
     def check_CDS(self):
         if not self.cds.startswith("ATG"): 
@@ -265,7 +274,7 @@ class AbstractGeneAssembler(ABC):
         self.filter_exon_data()
         self.extend_flank3()
         self.extract_exon_sequences()
-        self.load_ORFS_into_dataframe()
+        self.load_exons_into_dataframe()
         self.trim_ORFs()
         self.predict_CDS()
         self.predict_protein()
@@ -294,6 +303,7 @@ class ExonAssembler(AbstractGeneAssembler):
             logging.error("all exon strands must be identical!")
             sys.exit(1)
 
+        self.strand = exon_data.strand.unique()[0]
         self.exon_data = exon_data
         self.strand = self.exon_data.strand.unique()[0]
 
@@ -313,12 +323,19 @@ class LocusAssembler(AbstractGeneAssembler):
             & (self.bed.Name.map(lambda x: x.startswith("exon")))
         ]
 
-        if exon_data.strand.unique()[0] == "-":
-            self.exon_list = list(exon_data.name)[::-1]
+        self.strand = exon_data.strand.unique()[0]
+
+        if self.strand == "-":
+            self.exon_list = list(exon_data.Name)[::-1]
+            exon_data["Name"] = pd.Categorical(
+            exon_data["Name"].copy(), categories=self.exon_list, ordered=True
+            )
+            exon_data.sort_values(by="Name", inplace=True)
 
         else:
             self.exon_list = list(exon_data.Name)
 
+        
         self.exon_data = exon_data
         self.strand = self.exon_data.strand.unique()[0]
 
