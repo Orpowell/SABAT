@@ -68,7 +68,6 @@ class AbstractGeneAssembler(ABC):
             last_exon = int(self.exon_list[-1].split("_")[1])
             self.exon_data.at[last_exon, "chromStart"] = self.exon_data.at[last_exon, "chromEnd"] - self.flank
 
-
     def extract_exon_sequences(self) -> None:
         logging.info("Generating batch entry file...")
 
@@ -144,8 +143,6 @@ class AbstractGeneAssembler(ABC):
                         
                         starts_stops.append(min(first_stops))
 
-                    print(starts_stops)
-
                     stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
                     lengths = list(map(len, stopped))
                     biggest = lengths.index(max(lengths))
@@ -217,6 +214,21 @@ class AbstractGeneAssembler(ABC):
 
         self.cds = "".join(cds)
 
+    def check_CDS(self):
+        if not self.cds.startswith("ATG"): 
+            self.nuke()
+
+        if not self.endswith(("TAA", "TAG", "TGA")):
+            logging.info("CDS doesn't contain a valid stop codon...")
+            logging.info("Shutting down")
+            self.nuke()
+            sys.exit(1)
+        else:
+            logging.info("CDS contains valid start and stop codon")
+            logging.info("Shutting down")
+            self.nuke()
+            sys.exit(1)
+
     def predict_protein(self):
         self.protein = str(Seq(self.cds).translate())
 
@@ -257,10 +269,8 @@ class AbstractGeneAssembler(ABC):
         self.trim_ORFs()
         self.predict_CDS()
         self.predict_protein()
-        #self.translate_ORFS()
-        #self.predict_protein()
-        #self.write_output_sequences()
-        #self.generate_statistics()
+        self.write_output_sequences()
+        self.generate_statistics()
         self.nuke()
 
 
