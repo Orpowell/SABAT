@@ -115,7 +115,7 @@ class AbstractGeneAssembler(ABC):
             lambda x: x[2:] if len(x[2:]) % 3 == 0 else x[2 : -(len(x[2:]) % 3)]
         )
     
-    def process_ORFS(self):
+    def predict_CDS(self):
         first_exon = self.exon_list[0]
         last_exon = self.exon_list[-1]
 
@@ -126,11 +126,35 @@ class AbstractGeneAssembler(ABC):
             best_orfs = []
 
             if exon.Name == first_exon:
-                print("first")
-                pass
-            
+                for exon in exon_cds:
+                    codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
+
+                    starts = [codons[n:] for n, codon in enumerate(codons) if codon == "ATG"]
+                    starts_stops = []
+                    
+                    for seq in starts:
+                        first_stops = []
+                        for stop in ["TGA", "TAG", "TTA"]:
+                            try:
+                                s = seq.index(stop)
+                                first_stops.append(s)
+                            except ValueError:
+                                first_stops.append(len(seq))
+                        
+                        starts_stops.append(min(first_stops))
+
+                    print(starts_stops)
+
+                    stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
+                    lengths = list(map(len, stopped))
+                    biggest = lengths.index(max(lengths))
+                    best_orfs.append("".join([str(codon) for codon in stopped[biggest]]))
+                
+                lengths = list(map(len, best_orfs))
+                max_len = lengths.index(max(lengths))
+                cds.append(str(best_orfs[max_len]))
+                            
             elif exon.Name == last_exon:
-                print("last")
                 for exon in exon_cds:
                     codons = [exon[i:i+3] for i in range(0, len(exon), 3)]
                     ranges = [n for n, codon in enumerate(codons) if codon in ["TAG", "TAA", "TGA"]]
@@ -275,7 +299,7 @@ class AbstractGeneAssembler(ABC):
         self.extract_exon_sequences()
         self.load_ORFS_into_dataframe()
         self.trim_ORFs()
-        self.process_ORFS()
+        self.predict_CDS()
         #self.translate_ORFS()
         #self.predict_protein()
         #self.write_output_sequences()
