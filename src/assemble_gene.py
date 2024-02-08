@@ -182,9 +182,12 @@ class AbstractGeneAssembler(ABC):
                         start = end +1
 
                     best_orfs.append("".join(map(str, biggest)))
-                
-                lengths = [len(exon) for exon in best_orfs if exon.endswith(("TAG", "TGA", "TAA"))]
+                print(best_orfs)
+                lengths = [len(exon) if str(exon).endswith(("TAG", "TGA", "TAA")) else 0 for exon in best_orfs]
+                print(lengths)
                 max_len = lengths.index(max(lengths))
+                print(max_len)
+                print(best_orfs[max_len])
                 cds.append(best_orfs[max_len])
                     
             else:
@@ -217,7 +220,9 @@ class AbstractGeneAssembler(ABC):
                 max_len = lengths.index(max(lengths))
                 cds.append(str(best_orfs[max_len]))
 
+        
         self.cds = "".join([str(exon) for exon in cds])
+        print(self.cds)
 
     def check_CDS(self):
         if not self.cds.startswith("ATG"): 
@@ -225,11 +230,6 @@ class AbstractGeneAssembler(ABC):
 
         if not self.cds.endswith(("TAA", "TAG", "TGA")):
             logging.info("CDS doesn't contain a valid stop codon...")
-            logging.info("Shutting down")
-            self.nuke()
-            sys.exit(1)
-        else:
-            logging.info("CDS contains valid start and stop codon")
             logging.info("Shutting down")
             self.nuke()
             sys.exit(1)
