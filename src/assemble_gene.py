@@ -5,6 +5,7 @@ import sys
 import os
 import warnings
 from Bio import SeqIO
+from Bio.Seq import Seq
 import click
 import logging
 from abc import ABC
@@ -214,55 +215,10 @@ class AbstractGeneAssembler(ABC):
                 max_len = lengths.index(max(lengths))
                 cds.append(str(best_orfs[max_len]))
 
-        print("".join(cds))
-
-
-
-
-    def translate_ORFS(self):
-        self.exon_data["prot1"] = self.exon_data.ORF1.map(
-            lambda x: x.translate(to_stop=True, stop_symbol="*")
-        )
-        self.exon_data["prot2"] = self.exon_data.ORF2.map(
-            lambda x: x.translate(to_stop=True, stop_symbol="*")
-        )
-        self.exon_data["prot3"] = self.exon_data.ORF3.map(
-            lambda x: x.translate(to_stop=True, stop_symbol="*")
-        )
+        self.cds = "".join(cds)
 
     def predict_protein(self):
-        protein = []
-        cds = []
-        first_exon = self.exon_list[0]
-
-        logging.info("Predicting gene protein sequence and CDS...")
-
-        for index, exon in self.exon_data.iterrows():
-            exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
-            exon_prots = [exon.prot1, exon.prot2, exon.prot3]
-            prot_len = list(map(len, exon_prots))
-
-            if exon.Name == first_exon:
-                valid_starts = [
-                    exon_cds.index(e) for e in exon_cds if str(e).startswith("ATG")
-                ]
-
-                if len(valid_starts) == 0:
-                    self.nuke()
-                    logging.error("No valid start codon in first exon")
-                    sys.exit(1)
-
-                elif len(valid_starts) == 1:
-                    biggest_exon = valid_starts[0]
-                    
-            else:
-                biggest_exon = prot_len.index(max(prot_len))
-
-            protein.append(exon_prots[biggest_exon])
-            cds.append(exon_cds[biggest_exon])
-
-        self.protein = "".join([str(seq) for seq in protein])
-        self.cds = "".join([str(seq) for seq in cds])
+        self.protein = str(Seq(self.cds).translate())
 
     def write_output_sequences(self):
         logging.info(f"Writing CDS sequence to {self.output}.cds.fasta")
@@ -300,6 +256,7 @@ class AbstractGeneAssembler(ABC):
         self.load_ORFS_into_dataframe()
         self.trim_ORFs()
         self.predict_CDS()
+        self.predict_protein()
         #self.translate_ORFS()
         #self.predict_protein()
         #self.write_output_sequences()
