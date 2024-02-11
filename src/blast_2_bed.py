@@ -66,7 +66,7 @@ class BlastConverter:
         self.cds_blast_data.sort_values(by="sstart", inplace=True)
         self.cds_blast_data.reset_index(drop=True, inplace=True)
 
-        self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map(
+        self.cds_blast_data["chromosome"]: str = self.cds_blast_data.sseqid.map( # type: ignore
             lambda x: x.split("|")[1] if "|" in x else x
         )
 
@@ -81,7 +81,7 @@ class BlastConverter:
         self.bed9["thickStart"]: int = self.cds_blast_data.sstart  # type: ignore
         self.bed9["thickEnd"]: int = self.cds_blast_data.send  # type: ignore
         self.bed9["itemRgb"]: str = "145,30,180"  # type: ignore
-        self.bed9["exonList"]: str = ""
+        self.bed9["exonList"]: str = "" # type: ignore
 
     def predict_gene_loci(self):
         gene_locus = 0
