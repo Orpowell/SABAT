@@ -64,9 +64,18 @@ Command:
     > genes.fasta
 
 
+## Assumptions
+
+1. A gene's first exon starts with start codon (ATG).
+2. A gene's last exon ends with a stop codon (TGA, TTA or TAG).
+3. A gene's intermediate exons donot have to start with a start codon (ATG)
+4. If a gene's intermediate exon contains a stop codon that is the end of the exon.
+5. dc-megaBLAST can more readily identify the first exon (at least for nlr/kinase) so the first exon must start with ATG
+6. dc-megaBLAST less readily identifies the end of the last exon (including the stop codon) so the last exon can be extended (-flank) to include additional codons
+7. The longest exon is the correct exon (providing all other criteria are satisfied) 
+
+
 ### Roadmap
 
-- stderr logging for all commands
-- ordered stdout for assemble-gene
 - edit and unedited outputs for assemble-gene (will need to output results as file rather than to std out)
 - chromosome headers should not contain the character |
