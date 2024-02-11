@@ -137,36 +137,26 @@ class AbstractGeneAssembler(ABC):
             best_orfs = []
             logging.info(f"analyzing {exon.Name}")
             if exon.Name == first_exon:
+                print(exon_cds)
                 for exon in exon_cds:
                     codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
-                    starts = [
-                        codons[n:] for n, codon in enumerate(codons) if codon == "ATG"
-                    ]
+                    stops = []
 
-                    if len(starts) == 0:
-                        logging.info("First codon doesn't start with a start codon")
-                        self.nuke()
-                        sys.exit(1)
-
-                    starts_stops = []
-
-                    for seq in starts:
-                        first_stops = []
-                        for stop in ["TGA", "TAG", "TAA"]:
-                            try:
-                                s = seq.index(stop)
-                                first_stops.append(s)
-                            except ValueError:
-                                first_stops.append(len(seq))
-
-                        starts_stops.append(min(first_stops))
-
-                    stopped = [starts[i][:n] for i, n in enumerate(starts_stops)]
-                    lengths = list(map(len, stopped))
-                    biggest = lengths.index(max(lengths))
-                    best_orfs.append(
-                        "".join([str(codon) for codon in stopped[biggest]])
-                    )
+                    stops.append(len(codons))
+                    for terminator in ["TAA", "TGA", "TAG"]:
+                        try:
+                            stop_pos = codons.index(terminator)
+                            stops.append(stop_pos)
+                        except ValueError:
+                            continue
+                    
+                    earliest_stop = min(stops)
+                    
+                    try:
+                        atg = codons[: earliest_stop].index("ATG")
+                        best_orfs.append("".join([str(codon) for codon in codons[atg: earliest_stop]]))
+                    except ValueError:
+                        best_orfs.append("")
 
                 lengths = list(map(len, best_orfs))
                 max_len = lengths.index(max(lengths))
