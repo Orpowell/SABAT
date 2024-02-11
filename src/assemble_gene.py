@@ -135,12 +135,19 @@ class AbstractGeneAssembler(ABC):
         for index, exon in self.exon_data.iterrows():
             exon_cds = [exon.ORF1, exon.ORF2, exon.ORF3]
             best_orfs = []
+            logging.info(f"analyzing {exon.Name}")
             if exon.Name == first_exon:
                 for exon in exon_cds:
                     codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
                     starts = [
                         codons[n:] for n, codon in enumerate(codons) if codon == "ATG"
                     ]
+
+                    if len(starts) == 0:
+                        logging.info("First codon doesn't start with a start codon")
+                        self.nuke()
+                        sys.exit(1)
+
                     starts_stops = []
 
                     for seq in starts:
@@ -194,15 +201,13 @@ class AbstractGeneAssembler(ABC):
                         start = end + 1
 
                     best_orfs.append("".join(map(str, biggest)))
-                print(best_orfs)
+
                 lengths = [
                     len(exon) if str(exon).endswith(("TAG", "TGA", "TAA")) else 0
                     for exon in best_orfs
                 ]
-                print(lengths)
+
                 max_len = lengths.index(max(lengths))
-                print(max_len)
-                print(best_orfs[max_len])
                 cds.append(best_orfs[max_len])
 
             else:
@@ -240,7 +245,6 @@ class AbstractGeneAssembler(ABC):
                 cds.append(str(best_orfs[max_len]))
 
         self.cds = "".join([str(exon) for exon in cds])
-        print(self.cds)
 
     def check_CDS(self):
         if not self.cds.startswith("ATG"):
