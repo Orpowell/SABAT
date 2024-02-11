@@ -137,30 +137,35 @@ class AbstractGeneAssembler(ABC):
             best_orfs = []
             logging.info(f"analyzing {exon.Name}")
             if exon.Name == first_exon:
-                print(exon_cds)
                 for exon in exon_cds:
                     codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
                     stops = []
+                    
+                    try:
+                        atg = codons.index("ATG")
+                    except ValueError:
+                        best_orfs.append("")
+                        continue
 
                     stops.append(len(codons))
                     for terminator in ["TAA", "TGA", "TAG"]:
                         try:
-                            stop_pos = codons.index(terminator)
+                            stop_pos = codons[atg:].index(terminator)
                             stops.append(stop_pos)
                         except ValueError:
                             continue
                     
                     earliest_stop = min(stops)
-                    
-                    try:
-                        atg = codons[: earliest_stop].index("ATG")
-                        best_orfs.append("".join([str(codon) for codon in codons[atg: earliest_stop]]))
-                    except ValueError:
-                        best_orfs.append("")
+
+                    exon = "".join([str(codon) for codon in codons[atg:earliest_stop]])
+
+                    best_orfs.append(exon)
 
                 lengths = list(map(len, best_orfs))
                 max_len = lengths.index(max(lengths))
-                cds.append(str(best_orfs[max_len]))
+                exon = best_orfs[max_len]
+                cds.append(exon)
+                logging.info(exon)
 
             elif exon.Name == last_exon:
                 for exon in exon_cds:
@@ -198,7 +203,10 @@ class AbstractGeneAssembler(ABC):
                 ]
 
                 max_len = lengths.index(max(lengths))
-                cds.append(best_orfs[max_len])
+                exon = best_orfs[max_len]
+                logging.info(exon)
+                cds.append(exon)
+                
 
             else:
                 for exon in exon_cds:
@@ -228,11 +236,17 @@ class AbstractGeneAssembler(ABC):
 
                         start = end + 1
 
-                    best_orfs.append("".join(map(str, biggest)))
 
-                lengths = list(map(len, best_orfs))
+                    best_orfs.append("".join(map(str, biggest)))
+                
+                lengths = [len(exon) for exon in best_orfs]
+
                 max_len = lengths.index(max(lengths))
-                cds.append(str(best_orfs[max_len]))
+                exon = best_orfs[max_len]
+                logging.info(exon)
+                p = Seq(str(exon)).translate()
+                logging.info(p)
+                cds.append(exon)
 
         self.cds = "".join([str(exon) for exon in cds])
 
