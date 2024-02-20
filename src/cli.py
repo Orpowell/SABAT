@@ -116,7 +116,7 @@ def main():
 
     # Assemble-locus parser
     assemble_locus_parser = sub_parsers.add_parser(
-        "assemble-locus", help="Assemble gene from a defined locus"
+        "assemble-locus", help="Assemble gene from a predicted locus"
     )
 
     # Assemble-locus arguments
@@ -160,7 +160,13 @@ def main():
         help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)",
     )
 
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+
     args = parser.parse_args()
+
+    
 
     if args.command == "blast2bed":
         blast2bed(
