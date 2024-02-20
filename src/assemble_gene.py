@@ -6,7 +6,6 @@ import os
 import warnings
 from Bio import SeqIO
 from Bio.Seq import Seq
-import click
 import logging
 from abc import ABC
 
@@ -361,41 +360,14 @@ class LocusAssembler(AbstractGeneAssembler):
         self.exon_data = exon_data
         self.strand = self.exon_data.strand.unique()[0]
 
-
-@click.command()
-@click.option(
-    "-i", "--input", type=click.Path(exists=True), required=True, help="bed file"
-)
-@click.option(
-    "-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)"
-)
-@click.option(
-    "-e",
-    "--exons",
-    type=click.Path(exists=True),
-    required=True,
-    help="txt file with exons of interest",
-)
-@click.option("-o", "--output", required=True, help="Base name for output files")
-@click.option(
-    "-f",
-    "--flank",
-    type=int,
-    default=0,
-    required=False,
-    help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)",
-)
 def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flank: int):
     """
     Assemble a gene from exons defined in a bed file
     """
-    with open(exons) as file:
-        exons_list = [line.strip() for line in file]
-
     gene = ExonAssembler(
         BED_FILE=input,
         BLASTDB_PATH=blastdb,
-        EXON_LIST=exons_list,
+        EXON_LIST=exons,
         output=output,
         flank=flank,
     )
