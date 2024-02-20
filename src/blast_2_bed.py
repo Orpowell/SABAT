@@ -141,28 +141,8 @@ class BlastConverter:
         self.write_bed_file()
 
 
-@click.command()
-@click.option(
-    "-i",
-    "--input",
-    type=click.Path(exists=True),
-    required=True,
-    help="BLAST file in tabular format",
-)
-@click.option(
-    "-e", "--exons", type=int, default=0, help="Expected number of exons in the gene"
-)
-@click.option(
-    "-c",
-    "--coverage",
-    type=float,
-    default=1.1,
-    help="Proportion of gene that must be covered by a predicted locus",
-)
-@click.option(
-    "-l", "--locus_size", type=int, default=1000, help="Expected size of the locus"
-)
-def blast2bed(input: str, exons: int, coverage: int, locus_size: int):
+
+def blast2bed(input: str, exons: int, coverage: float, locus_size: int):
     """
     Convert BLAST results to BED and predict gene loci
     """
