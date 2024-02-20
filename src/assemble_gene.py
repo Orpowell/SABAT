@@ -402,24 +402,6 @@ def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flan
     gene.run()
 
 
-@click.command()
-@click.option(
-    "-i", "--input", type=click.Path(exists=True), required=True, help="bed file"
-)
-@click.option(
-    "-db", "--blastdb", required=True, help="Path to the BLASTdb (including name)"
-)
-@click.option(
-    "-l", "--locus", type=str, required=True, help="Name of the predicted locus"
-)
-@click.option("-o", "--output", required=True, help="Base name for output files")
-@click.option(
-    "-f",
-    "--flank",
-    type=int,
-    default=0,
-    help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)",
-)
 def assemble_locus(input: str, blastdb: str, locus: str, output: str, flank: int):
     """
     Assemble a gene from a locus defined in a bed file
