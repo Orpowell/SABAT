@@ -139,7 +139,7 @@ class AbstractGeneAssembler(ABC):
                 for exon in exon_cds:
                     codons = [exon[i : i + 3] for i in range(0, len(exon), 3)]
                     stops = []
-                    
+
                     try:
                         atg = codons.index("ATG")
                     except ValueError:
@@ -153,7 +153,7 @@ class AbstractGeneAssembler(ABC):
                             stops.append(stop_pos)
                         except ValueError:
                             continue
-                    
+
                     earliest_stop = min(stops)
 
                     exon = "".join([str(codon) for codon in codons[atg:earliest_stop]])
@@ -205,7 +205,6 @@ class AbstractGeneAssembler(ABC):
                 exon = best_orfs[max_len]
                 logging.info(exon)
                 cds.append(exon)
-                
 
             else:
                 for exon in exon_cds:
@@ -235,9 +234,8 @@ class AbstractGeneAssembler(ABC):
 
                         start = end + 1
 
-
                     best_orfs.append("".join(map(str, biggest)))
-                
+
                 lengths = [len(exon) for exon in best_orfs]
 
                 max_len = lengths.index(max(lengths))
@@ -359,6 +357,7 @@ class LocusAssembler(AbstractGeneAssembler):
 
         self.exon_data = exon_data
         self.strand = self.exon_data.strand.unique()[0]
+
 
 def assemble_exons(input: str, blastdb: str, exons: list[str], output: str, flank: int):
     """
