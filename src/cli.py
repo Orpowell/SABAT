@@ -13,6 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+
 def is_valid_file(parser, arg):
     if not os.path.exists(arg):
         parser.error(f"Input file ({arg}) not found!")
@@ -22,8 +23,8 @@ def is_valid_file(parser, arg):
 
 
 def main():
+    # Initialise parser and subparser for each command
     parser = argparse.ArgumentParser()
-
     sub_parsers = parser.add_subparsers(dest="command", prog="sabat")
 
     # Parser for blast2bed command 
@@ -39,7 +40,11 @@ def main():
     assemble_exons_parser = sub_parsers.add_parser("assemble-exons", help="Assemble gene from specified exons")
     
     # Assemble-exons arguments
-    assemble_exons_parser.add_argument("-i", metavar="--input", help="path to bed file")
+    assemble_exons_parser.add_argument("-i", "--input", metavar="input", type=lambda x: is_valid_file(parser, x), required=True, help="bed file")
+    assemble_exons_parser.add_argument("-db", "--blastdb", metavar="blastdb", required=True, help="Path to the BLASTdb (including name)")
+    assemble_exons_parser.add_argument("-e", "--exons", metavar="exons", nargs='+', type=str, required=True, help="Name of exons")
+    assemble_exons_parser.add_argument("-o", "--output", metavar="output", required=True, help="Base name for output files")
+    assemble_exons_parser.add_argument("-f","--flank", metavar="flank", type=int, default=0, required=False, help="Number of nucleotides to add to 3' flank of the predicted gene (ensures stop codon is found)")
 
     # Assemble-locus parser
     assemble_locus_parser = sub_parsers.add_parser("assemble-locus", help="Assemble gene from a defined locus")
@@ -59,10 +64,13 @@ def main():
 
     if args.command == "assemble-locus":
         assemble_locus(input=args.input, blastdb=args.blastdb, locus=args.locus, output=args.output, flank=args.flank)
+    
+    if args.command == "assemble-exons":
+        assemble_exons(input=args.input, blastdb=args.blastdb, exons=args.exons, output=args.output, flank=args.flank)
 
 
 
 
 if __name__ == "__main__":
     main()
-    #cli()
+
