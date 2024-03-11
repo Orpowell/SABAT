@@ -268,7 +268,7 @@ class AbstractGeneAssembler(ABC):
 
         logging.info(f"Writing protein sequence to {self.output}.prot.fasta")
         with open(f"{self.output}.prot.fasta", "w+") as prot:
-            prot.write(f">{self.output}\n")
+            prot.write(f">{os.path.basename(self.output)}\n")
             prot.write(self.protein)
 
     def generate_statistics(self) -> None:
