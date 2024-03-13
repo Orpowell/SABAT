@@ -262,12 +262,12 @@ class AbstractGeneAssembler(ABC):
 
     def write_output_sequences(self):
         logging.info(f"Writing CDS sequence to {self.output}.cds.fasta")
-        with open(f"{self.output}.cds.fasta", "w+") as cds:
+        with open(f"{self.output.strip()}.cds.fasta", "w+") as cds:
             cds.write(f">{os.path.basename(self.output)}\n")
             cds.write(self.cds)
 
         logging.info(f"Writing protein sequence to {self.output}.prot.fasta")
-        with open(f"{self.output}.prot.fasta", "w+") as prot:
+        with open(f"{self.output.strip()}.prot.fasta", "w+") as prot:
             prot.write(f">{os.path.basename(self.output)}\n")
             prot.write(self.protein)
 
