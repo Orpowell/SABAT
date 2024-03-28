@@ -1,8 +1,0 @@
-name: sabat
-channels:
-  - defaults
-dependencies:
-  - click
-  - pandas
-  - biopython
-prefix: /home/powellor/anaconda3/envs/sabat
